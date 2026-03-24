@@ -1,0 +1,1911 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orizon Fireline — Security Audit Report — aziendaanonima.com</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+:root, [data-theme="dark"] {
+    --brand: #6bef1a; --brand-glow: rgba(107,239,26,.2); --brand-hover: #8ef24a; --brand-dim: #4ac300;
+    --brand-border: rgba(107,239,26,.25);
+    --bg-primary: #020617; --bg-secondary: #0f172a; --bg-elevated: #1e293b;
+    --border: #334155; --border-hover: rgba(107,239,26,.3);
+    --text-primary: #f8fafc; --text-secondary: #94a3b8; --text-muted: #64748b;
+    --critical: #f87171; --critical-bg: rgba(69,10,10,.5); --critical-border: #7f1d1d;
+    --high: #fb923c; --high-bg: rgba(67,20,7,.5); --high-border: #7c2d12;
+    --medium: #fbbf24; --medium-bg: rgba(69,26,3,.5); --medium-border: #78350f;
+    --low: #60a5fa; --low-bg: rgba(30,58,95,.5); --low-border: #1e40af;
+    --info-c: #9ca3af; --info-bg: rgba(31,41,55,.5); --info-border: #374151;
+    --success: #4ade80; --success-bg: rgba(74,222,128,.1); --success-border: rgba(74,222,128,.25);
+    --warning: #fbbf24; --error: #f87171; --info: #22d3ee;
+    --nav-bg: rgba(2,6,23,.94);
+    --hero-gradient: rgba(107,239,26,.03);
+  }
+  [data-theme="light"] {
+    --brand: #4ac300; --brand-glow: rgba(74,195,0,.12); --brand-hover: #3da600; --brand-dim: #6bef1a;
+    --brand-border: rgba(74,195,0,.25);
+    --bg-primary: #f8fafc; --bg-secondary: #f1f5f9; --bg-elevated: #e2e8f0;
+    --border: #cbd5e1; --border-hover: rgba(74,195,0,.3);
+    --text-primary: #0f172a; --text-secondary: #475569; --text-muted: #64748b;
+    --critical: #dc2626; --critical-bg: #fef2f2; --critical-border: #fecaca;
+    --high: #ea580c; --high-bg: #fff7ed; --high-border: #fed7aa;
+    --medium: #d97706; --medium-bg: #fffbeb; --medium-border: #fde68a;
+    --low: #2563eb; --low-bg: #eff6ff; --low-border: #bfdbfe;
+    --info-c: #6b7280; --info-bg: #f9fafb; --info-border: #e5e7eb;
+    --success: #16a34a; --success-bg: rgba(22,163,74,.08); --success-border: rgba(22,163,74,.2);
+    --warning: #d97706; --error: #dc2626; --info: #2563eb;
+    --nav-bg: rgba(248,250,252,.94);
+    --hero-gradient: rgba(74,195,0,.04);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg-primary); color: var(--text-primary); font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; transition: background-color .3s, color .3s; }
+  a { color: var(--info); text-decoration: none; }
+  a:hover { text-decoration: underline; color: var(--brand); }
+  code, .mono { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: .82rem; }
+
+  .topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 200; background: var(--bg-primary); border-bottom: 1px solid var(--border); height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; transition: background-color .3s, border-color .3s; }
+  .topbar-left { display: flex; align-items: center; gap: .75rem; }
+  .topbar-logo { height: 24px; width: auto; color: var(--text-primary); }
+  .topbar-divider { width: 1px; height: 20px; background: var(--border); }
+  .topbar-product { font-size: .8rem; font-weight: 600; color: var(--brand); letter-spacing: .025em; text-transform: uppercase; }
+  .topbar-right { font-size: .7rem; color: var(--text-muted); display: flex; align-items: center; gap: 1rem; }
+  .topbar-right a { color: var(--text-secondary); font-weight: 500; }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1.5rem; }
+  @media (max-width: 768px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+
+  .hero { text-align: center; padding: 6rem 2rem 3rem; border-bottom: 1px solid var(--border); background: linear-gradient(180deg, var(--hero-gradient) 0%, transparent 60%); transition: background .3s, border-color .3s; }
+  .hero-badge { display: inline-flex; align-items: center; gap: .5rem; background: var(--bg-secondary); border: 1px solid var(--border); padding: .35rem 1rem; border-radius: 9999px; font-size: .75rem; color: var(--brand); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 1.5rem; }
+  .hero h1 { font-size: 2.5rem; font-weight: 800; color: var(--text-primary); margin-bottom: .5rem; letter-spacing: -.025em; }
+  .hero .subtitle { font-size: 1.05rem; color: var(--text-secondary); margin-bottom: .5rem; }
+  .hero .powered-by { font-size: .8rem; color: var(--text-muted); margin-bottom: 2rem; }
+  .hero .powered-by strong { color: var(--brand); font-weight: 600; }
+  .hero-meta { display: flex; justify-content: center; gap: 2.5rem; color: var(--text-muted); font-size: .82rem; }
+  .hero-meta span { display: flex; align-items: center; gap: .4rem; }
+
+  .nav { position: sticky; top: 48px; z-index: 100; background: var(--nav-bg); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: .6rem 2rem; transition: background .3s, border-color .3s; }
+  .nav-inner { max-width: 1200px; margin: 0 auto; display: flex; gap: 1rem; overflow-x: auto; }
+  .nav a { color: var(--text-secondary); font-size: .78rem; white-space: nowrap; padding: .3rem .6rem; border-radius: 4px; transition: .15s; text-decoration: none; }
+  .nav a:hover { color: var(--text-primary); background: var(--bg-elevated); }
+
+  .card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; transition: border-color .2s, background-color .3s; }
+  .card:hover { border-color: var(--border-hover); }
+  .card h3 { font-size: 1rem; color: var(--text-primary); font-weight: 600; }
+  .card-sm { font-size: .72rem; color: var(--text-muted); }
+
+  .hdr-bar { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+  .hdr-item { font-size: .85rem; color: var(--text-secondary); }
+  .hdr-item .k { color: var(--text-muted); font-weight: 500; }
+  .hdr-item .v { color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: .82rem; }
+
+  section { padding: 3rem 0; }
+  section + section { border-top: 1px solid var(--border); }
+  .section-title { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: .5rem; display: flex; align-items: center; gap: .75rem; letter-spacing: -.025em; }
+  .section-title .num { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; background: var(--brand); color: var(--bg-primary); border-radius: 8px; font-size: .85rem; font-weight: 700; }
+  .section-desc { color: var(--text-secondary); margin-bottom: 2rem; font-size: .92rem; }
+
+  .score-ring { position: relative; width: 140px; height: 140px; margin: 0 auto 1rem; }
+  .score-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .score-ring circle { fill: none; stroke-width: 8; }
+  .score-ring .bg { stroke: var(--bg-elevated); }
+  .score-ring .fg { stroke-linecap: round; transition: stroke-dashoffset .8s ease; }
+  .score-ring .label { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .score-ring .grade { font-size: 2rem; font-weight: 800; color: var(--text-primary); line-height: 1; }
+  .score-ring .pts { font-size: .85rem; color: var(--text-secondary); }
+
+  .badge { display: inline-flex; align-items: center; gap: .3rem; padding: .2rem .6rem; border-radius: 4px; font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+  .badge-critical { background: var(--critical-bg); color: var(--critical); border: 1px solid var(--critical-border); }
+  .badge-high { background: var(--high-bg); color: var(--high); border: 1px solid var(--high-border); }
+  .badge-medium { background: var(--medium-bg); color: var(--medium); border: 1px solid var(--medium-border); }
+  .badge-low { background: var(--low-bg); color: var(--low); border: 1px solid var(--low-border); }
+  .badge-info { background: var(--info-bg); color: var(--info-c); border: 1px solid var(--info-border); }
+  .badge-brand { background: var(--brand-glow); color: var(--brand); border: 1px solid var(--brand-border); }
+  .badge-success { background: var(--success-bg); color: var(--success); border: 1px solid var(--success-border); }
+
+  table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+  th { text-align: left; padding: .6rem .8rem; color: var(--text-muted); font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; border-bottom: 1px solid var(--border); background: var(--bg-elevated); }
+  td { padding: .6rem .8rem; border-bottom: 1px solid var(--border); color: var(--text-primary); vertical-align: top; }
+
+  .finding { padding: 1rem 1.25rem; border-left: 3px solid var(--border); margin-bottom: .75rem; border-radius: 0 8px 8px 0; background: var(--bg-secondary); }
+  .finding.critical { border-left-color: var(--critical); }
+  .finding.high { border-left-color: var(--high); }
+  .finding.medium { border-left-color: var(--medium); }
+  .finding.low { border-left-color: var(--low); }
+  .finding.info { border-left-color: var(--info-c); }
+  .finding-title { font-weight: 600; color: var(--text-primary); margin-bottom: .25rem; font-size: .9rem; }
+  .finding-text { color: var(--text-secondary); font-size: .85rem; }
+  .finding-tag { float: right; }
+
+  .stat-box { text-align: center; padding: 1.5rem; }
+  .stat-val { font-size: 2.2rem; font-weight: 800; line-height: 1; }
+  .stat-label { font-size: .8rem; color: var(--text-muted); margin-top: .3rem; }
+
+  .gauge-row { display: flex; align-items: center; gap: .75rem; margin-bottom: .6rem; }
+  .gauge-label { width: 180px; font-size: .8rem; color: var(--text-secondary); flex-shrink: 0; }
+  .gauge-bar { flex: 1; height: 6px; background: var(--bg-elevated); border-radius: 3px; overflow: hidden; }
+  .gauge-fill { height: 100%; border-radius: 3px; }
+  .gauge-val { width: 40px; text-align: right; font-size: .8rem; font-family: 'JetBrains Mono', monospace; color: var(--text-muted); }
+
+  .cookie-flag { display: inline-block; padding: .15rem .4rem; border-radius: 4px; font-size: .7rem; margin-right: .3rem; font-weight: 600; }
+  .cookie-flag.ok { background: var(--success-bg); color: var(--success); }
+  .cookie-flag.fail { background: var(--critical-bg); color: var(--critical); }
+
+  .footer { text-align: center; padding: 3rem 2rem; border-top: 1px solid var(--border); background: var(--bg-secondary); transition: background-color .3s, border-color .3s; }
+  .footer-brand { display: flex; align-items: center; justify-content: center; gap: .75rem; margin-bottom: 1rem; }
+  .footer-divider { width: 60px; height: 2px; background: var(--brand); margin: 1.5rem auto; border-radius: 1px; }
+
+  .theme-toggle { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 6px; padding: .3rem .55rem; cursor: pointer; color: var(--text-secondary); font-size: .85rem; line-height: 1; transition: .2s; display: flex; align-items: center; gap: .35rem; }
+  .theme-toggle:hover { border-color: var(--brand); color: var(--text-primary); }
+  .theme-toggle .icon-sun, .theme-toggle .icon-moon { width: 14px; height: 14px; }
+  [data-theme="light"] .theme-toggle .icon-sun { display: none; }
+  [data-theme="dark"] .theme-toggle .icon-moon, :root:not([data-theme]) .theme-toggle .icon-moon { display: none; }
+
+  .print-only { display: none !important; }
+  .theme-toggle { display: flex; }
+
+  @media print {
+    @page { size: A4; margin: 20mm 15mm 25mm 15mm; }
+    @page :first { margin-top: 18mm; }
+    :root, [data-theme="dark"], [data-theme="light"] {
+      --brand: #4ac300; --brand-glow: rgba(74,195,0,.1); --brand-border: rgba(74,195,0,.2);
+      --bg-primary: #ffffff; --bg-secondary: #f8fafc; --bg-elevated: #f1f5f9;
+      --border: #e2e8f0; --border-hover: #e2e8f0;
+      --text-primary: #0f172a; --text-secondary: #475569; --text-muted: #64748b;
+      --critical: #dc2626; --critical-bg: #fef2f2; --critical-border: #fecaca;
+      --high: #ea580c; --high-bg: #fff7ed; --high-border: #fed7aa;
+      --medium: #d97706; --medium-bg: #fffbeb; --medium-border: #fde68a;
+      --low: #2563eb; --low-bg: #eff6ff; --low-border: #bfdbfe;
+      --info-c: #6b7280; --info-bg: #f9fafb; --info-border: #e5e7eb;
+      --success: #16a34a; --success-bg: rgba(22,163,74,.06); --success-border: rgba(22,163,74,.15);
+      --warning: #d97706; --error: #dc2626; --info: #2563eb;
+      --nav-bg: #fff;
+      --hero-gradient: transparent;
+    }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    body { background: #fff !important; color: #0f172a; font-size: 9pt; line-height: 1.5; padding-top: 28pt; padding-bottom: 20pt; }
+    .topbar, .nav, .theme-toggle { display: none !important; }
+    .print-only { display: block !important; }
+    .print-header { position: fixed; top: 0; left: 0; right: 0; height: 22pt; display: flex !important; align-items: center; justify-content: space-between; padding: 0 0 4pt 0; border-bottom: 1pt solid #0f172a; font-size: 7pt; background: #fff; z-index: 9999; }
+    .print-header-left { display: flex; align-items: center; gap: 6pt; font-weight: 700; color: #0f172a; font-size: 8pt; }
+    .print-header-left svg { width: 50pt; height: auto; fill: #0f172a; }
+    .print-header-left .ph-sep { width: 1pt; height: 10pt; background: #94a3b8; }
+    .print-header-left .ph-product { color: #4ac300; text-transform: uppercase; letter-spacing: .06em; font-size: 7pt; }
+    .print-header-right { color: #64748b; font-size: 6.5pt; text-align: right; }
+    .print-footer { position: fixed; bottom: 0; left: 0; right: 0; height: 16pt; display: flex !important; align-items: center; justify-content: space-between; padding: 4pt 0 0 0; border-top: .5pt solid #cbd5e1; font-size: 6pt; color: #94a3b8; background: #fff; z-index: 9999; }
+    .print-footer-left { display: flex; align-items: center; gap: 4pt; }
+    .print-footer-left svg { width: 10pt; height: 10pt; }
+    .print-class { display: block !important; text-align: center; font-size: 7pt; font-weight: 700; color: #dc2626; letter-spacing: .15em; text-transform: uppercase; padding: 3pt 0 6pt 0; }
+    .hero { padding: 0 0 6pt 0 !important; background: none !important; border-bottom: 1pt solid #e2e8f0; page-break-after: avoid; }
+    .hero-badge { background: #f1f5f9; border: 1pt solid #e2e8f0; color: #4ac300; font-size: 6pt; padding: 1.5pt 6pt; margin-bottom: 4pt !important; }
+    .hero h1 { font-size: 16pt; color: #0f172a; margin-bottom: 2pt; }
+    .hero .subtitle { font-size: 8pt; }
+    .hero .powered-by { font-size: 6.5pt; margin-bottom: 4pt; }
+    .hero-meta { font-size: 6.5pt; gap: 8pt; }
+    .container { max-width: 100%; padding: 0; }
+    section { padding: 8pt 0 !important; page-break-inside: auto; }
+    section + section { border-top: .5pt solid #e2e8f0; }
+    .section-title { font-size: 11pt; page-break-after: avoid; page-break-inside: avoid; }
+    .section-title .num { background: #4ac300; color: #fff; width: 14pt; height: 14pt; font-size: 7pt; border-radius: 3pt; }
+    .section-desc { font-size: 7.5pt; margin-bottom: 6pt; page-break-after: avoid; }
+    .grid-2 { gap: 6pt; page-break-inside: auto; }
+    .grid-3 { gap: 6pt; page-break-inside: auto; }
+    .grid-4 { gap: 6pt; }
+    .card { background: #f8fafc !important; border: .5pt solid #e2e8f0; border-radius: 3pt; padding: 7pt; page-break-inside: avoid; }
+    .finding { page-break-inside: avoid; padding: 4pt 6pt; margin-bottom: 3pt; border-left-width: 2pt; }
+    .finding-title { font-size: 7.5pt; }
+    .finding-text { font-size: 7pt; }
+    .stat-box { padding: 5pt; }
+    .stat-val { font-size: 15pt; }
+    .stat-label { font-size: 6pt; }
+    .score-ring { width: 55pt; height: 55pt; }
+    .score-ring .grade { font-size: 13pt; }
+    .score-ring .pts { font-size: 6pt; }
+    .badge { font-size: 5.5pt; padding: 1pt 4pt; }
+    table { font-size: 7pt; page-break-inside: auto; }
+    thead { display: table-header-group; }
+    tr { page-break-inside: avoid; }
+    th { font-size: 5.5pt; padding: 2pt 4pt; background: #f1f5f9 !important; }
+    td { padding: 2pt 4pt; }
+    code, .mono { font-size: 6.5pt; }
+    .gauge-row { margin-bottom: 3pt; }
+    .gauge-label { font-size: 7pt; width: 120pt; }
+    .gauge-bar { height: 4pt; }
+    .gauge-val { font-size: 7pt; width: 28pt; }
+    .cookie-flag { font-size: 5.5pt; padding: 1pt 2pt; }
+    #risk-radar { page-break-before: auto; }
+    #risk-radar .grid-2 { grid-template-columns: 1fr 1fr; page-break-inside: avoid; }
+    #risk-radar svg { max-width: 180pt !important; height: auto !important; }
+    #site-tree { page-break-before: always; }
+    #site-tree .card { padding: 0; overflow: visible; min-height: 0 !important; }
+    #site-tree-chart { max-height: 600pt; overflow: hidden !important; }
+    #site-tree-chart svg { max-height: 580pt; width: 100% !important; }
+    .footer { background: #f8fafc !important; padding: 10pt; page-break-inside: avoid; }
+    .footer-divider { height: .5pt; width: 30pt; margin: 5pt auto; }
+    .hdr-bar { gap: 4pt; }
+    .hdr-item { font-size: 7pt; }
+  }
+</style>
+<script>
+(function(){
+  try{var t=localStorage.getItem("orizon-theme")}catch(e){}
+  if(!t)t="dark";
+  document.documentElement.setAttribute("data-theme",t);
+})();
+function toggleTheme(){
+  var root=document.documentElement;
+  var cur=root.getAttribute("data-theme")||"dark";
+  var next=cur==="dark"?"light":"dark";
+  root.setAttribute("data-theme",next);
+  try{localStorage.setItem("orizon-theme",next)}catch(e){}
+  if(typeof updateTreeColors==="function"){setTimeout(updateTreeColors,50);}
+}
+</script>
+</head>
+<body>
+<div class="print-only print-header">
+  <div class="print-header-left">
+    <svg width="60" viewBox="0 0 1466.95 512" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="m606.1,219.97h0c-12.41-6.4-26.52-9.65-41.94-9.65s-30.52,3.4-42.98,10.09c-12.55,6.75-22.54,16.35-29.68,28.55-7.13,12.17-10.74,25.36-10.74,39.2s3.62,27.63,10.77,39.51c7.15,11.88,17.26,21.34,30.04,28.11,12.69,6.72,26.95,10.13,42.4,10.13s29.94-3.35,42.49-9.97c12.65-6.67,22.75-16.18,30-28.27,7.25-12.08,10.92-25.37,10.92-39.51s-3.77-27.99-11.2-40.15c-7.43-12.15-17.54-21.59-30.06-28.05Zm-42.14,24.49c8.65,0,16.51,1.87,23.36,5.55,6.82,3.66,11.96,8.7,15.71,15.39,3.75,6.69,5.65,14.36,5.65,22.77,0,13.01-4.06,23.29-12.43,31.44-8.4,8.19-18.9,12.17-32.09,12.17-8.65,0-16.47-1.86-23.24-5.54-6.77-3.67-11.9-8.7-15.69-15.37-3.78-6.65-5.69-14.29-5.69-22.7s1.86-16.17,5.52-22.8c3.65-6.61,8.74-11.63,15.56-15.32,6.84-3.71,14.7-5.59,23.35-5.59Z"/><rect x="835.71" y="210.33" width="37.88" height="155.46"/><polygon points="911.6 210.33 911.6 242.97 984.19 242.97 901.9 365.79 1046.94 365.79 1046.94 333.15 968.9 333.15 1051.28 210.33 911.6 210.33"/><path d="m1186.99,219.97h0c-12.41-6.4-26.52-9.65-41.94-9.65s-30.52,3.4-42.98,10.09c-12.55,6.75-22.54,16.35-29.68,28.55-7.13,12.17-10.74,25.36-10.74,39.2s3.63,27.63,10.78,39.51c7.15,11.88,17.25,21.34,30.03,28.11,12.69,6.72,26.95,10.13,42.4,10.13s29.94-3.35,42.49-9.97c12.65-6.67,22.74-16.18,30-28.27,7.25-12.08,10.92-25.37,10.92-39.5s-3.77-27.99-11.2-40.15c-7.43-12.15-17.54-21.59-30.07-28.05Zm-42.14,24.49c8.65,0,16.51,1.87,23.36,5.55,6.82,3.67,11.96,8.7,15.71,15.39,3.75,6.69,5.65,14.36,5.65,22.77,0,13.01-4.06,23.29-12.42,31.44-8.4,8.19-18.9,12.17-32.1,12.17-8.65,0-16.47-1.86-23.24-5.54-6.77-3.67-11.9-8.7-15.69-15.37-3.77-6.65-5.69-14.29-5.69-22.7s1.86-16.17,5.52-22.8c3.65-6.61,8.74-11.63,15.56-15.32,6.84-3.71,14.7-5.59,23.35-5.59Z"/><polygon points="1365.63 210.33 1365.63 302.03 1289.34 210.33 1257.64 210.33 1257.64 365.79 1294.91 365.79 1294.91 272.55 1371.69 365.79 1402.9 365.79 1402.9 210.33 1365.63 210.33"/><path d="m809.03,365.86l-41.5-71.87c1.65-1.14,3.24-2.38,4.74-3.73,9.48-8.56,14.29-19.86,14.29-33.57s-4.74-24.81-14.09-33.47c-9.24-8.56-21.29-12.89-35.82-12.89h-59.93v155.46h37.88v-62.83h14.37l36.24,62.9h43.82Zm-94.43-123.63h13.35c9.8,0,19.83,1.69,19.83,14.26,0,4.92-1.37,8.44-4.19,10.74-3.1,2.53-7.71,3.82-13.71,3.82h-15.27v-28.82Z"/><path d="m504.97,129.7c-136.11,78.58-188.99-79.44-321.41-2.99-132.42,76.45-22,201.26-158.11,279.85-7.65,4.42,115.34-48.13,247.76-124.58,132.42-76.45,236.18-144.63,231.77-152.28Zm-242.39,133.99c-97.47,56.28-134.64,64.26-129.01,61.01,29.88-17.25-33.89-118.04,63.59-174.31,97.47-56.28,152.91,49.32,182.75,32.09,3.22,5.58-19.86,24.94-117.34,81.22Z"/><path d="m400.77,223.59c14.11,61.02-12.35,126.6-69.4,159.54-57.66,33.29-128.56,22.85-174.31-21.03l30.15-15.47c6,4.72,12.42,8.8,19.14,12.21,33.41,16.91,74.43,17.14,109.28-2.98,41.47-23.94,62.34-69.86,56.39-114.55l28.75-17.72Z"/><path d="m257.36,344.01c4.18-2.33,8.34-4.69,12.38-7.27,18.82-11.98,36.2-25.82,50.89-43.12,7.07-8.32,12.54-17.32,16.14-27.19-16.5,9.69-33.27,19.45-50.24,29.25-22.75,13.13-45.21,25.77-67.15,37.86,5.84,3.82,11.83,7.43,17.98,10.82,6.61,3.64,13.38,3.32,19.99-.36Z"/><path d="m323.81,193.63c-1.01-4.82-3.47-8.26-7.65-10.44-.86-.45-1.74-.88-2.64-1.24-17.01-6.87-34.08-13.55-51.38-19.59-3.55-1.24-7.09-1.58-10.7-.38-1.84.62-3.67,1.27-5.5,1.92-8.42,2.97-16.79,6.09-25.11,9.34-7.81,3.05-15.62,6.15-23.37,9.36-4.09,1.7-7.21,4.58-8.41,9.2-.93,3.58-1.59,7.23-2.13,10.9-1.67,11.35-2.34,22.77-2.46,33.5.04,7.93.27,15.11,1.06,22.25.49,4.45,1.18,8.86,2.63,13.11.89,2.6,1.96,5.08,3.17,7.47,18.51-9.57,40.05-21.3,64.82-35.6,26.75-15.44,49.88-29.17,69.21-41.08-.44-2.92-.95-5.82-1.56-8.72Z"/></svg>
+    <div class="ph-sep"></div>
+    <span class="ph-product">Fireline</span>
+  </div>
+  <div class="print-header-right">
+    Security Audit Report &mdash; aziendaanonima.com<br>
+    06 March 2026 &middot; Confidenziale
+  </div>
+</div>
+<div class="print-only print-footer">
+  <div class="print-footer-left">
+    <svg width="10" height="10" viewBox="0 0 64 64" fill="var(--brand)" xmlns="http://www.w3.org/2000/svg"><path d="m63.98,15.16c-18.15,10.48-25.2-10.59-42.85-.4C3.47,24.95,18.19,41.6.05,52.07c-1.02.59,15.38-6.42,33.03-16.61,17.66-10.19,31.49-19.28,30.9-20.3Zm-32.32,17.87c-13,7.5-17.95,8.57-17.2,8.13,3.98-2.3-4.52-15.74,8.48-23.24,13-7.5,20.39,6.58,24.37,10.0.0.14-2.65,3.33-15.64,10.83Z"/><path d="m50.09,27.68c1.88,8.14-1.65,16.88-9.25,21.27s-17.14,3.05-23.24-2.8l4.02-2.06c.8.63,1.66,1.17,2.55,1.63,4.45,2.25,9.92,2.29,14.57-.4,5.53-3.19,8.31-9.31,7.52-15.27l3.83-2.36Z"/></svg>
+    Una tecnologia Orizon srl &mdash; www.orizon.one
+  </div>
+  <div>Orizon Fireline &mdash; orizon.one/fireline</div>
+</div>
+<div class="print-only print-class">Confidenziale &mdash; Uso interno</div>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <svg width="80" viewBox="0 0 1466.95 512" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="m606.1,219.97h0c-12.41-6.4-26.52-9.65-41.94-9.65s-30.52,3.4-42.98,10.09c-12.55,6.75-22.54,16.35-29.68,28.55-7.13,12.17-10.74,25.36-10.74,39.2s3.62,27.63,10.77,39.51c7.15,11.88,17.26,21.34,30.04,28.11,12.69,6.72,26.95,10.13,42.4,10.13s29.94-3.35,42.49-9.97c12.65-6.67,22.75-16.18,30-28.27,7.25-12.08,10.92-25.37,10.92-39.51s-3.77-27.99-11.2-40.15c-7.43-12.15-17.54-21.59-30.06-28.05Zm-42.14,24.49c8.65,0,16.51,1.87,23.36,5.55,6.82,3.66,11.96,8.7,15.71,15.39,3.75,6.69,5.65,14.36,5.65,22.77,0,13.01-4.06,23.29-12.43,31.44-8.4,8.19-18.9,12.17-32.09,12.17-8.65,0-16.47-1.86-23.24-5.54-6.77-3.67-11.9-8.7-15.69-15.37-3.78-6.65-5.69-14.29-5.69-22.7s1.86-16.17,5.52-22.8c3.65-6.61,8.74-11.63,15.56-15.32,6.84-3.71,14.7-5.59,23.35-5.59Z"/><rect x="835.71" y="210.33" width="37.88" height="155.46"/><polygon points="911.6 210.33 911.6 242.97 984.19 242.97 901.9 365.79 1046.94 365.79 1046.94 333.15 968.9 333.15 1051.28 210.33 911.6 210.33"/><path d="m1186.99,219.97h0c-12.41-6.4-26.52-9.65-41.94-9.65s-30.52,3.4-42.98,10.09c-12.55,6.75-22.54,16.35-29.68,28.55-7.13,12.17-10.74,25.36-10.74,39.2s3.63,27.63,10.78,39.51c7.15,11.88,17.25,21.34,30.03,28.11,12.69,6.72,26.95,10.13,42.4,10.13s29.94-3.35,42.49-9.97c12.65-6.67,22.74-16.18,30-28.27,7.25-12.08,10.92-25.37,10.92-39.5s-3.77-27.99-11.2-40.15c-7.43-12.15-17.54-21.59-30.07-28.05Zm-42.14,24.49c8.65,0,16.51,1.87,23.36,5.55,6.82,3.67,11.96,8.7,15.71,15.39,3.75,6.69,5.65,14.36,5.65,22.77,0,13.01-4.06,23.29-12.42,31.44-8.4,8.19-18.9,12.17-32.1,12.17-8.65,0-16.47-1.86-23.24-5.54-6.77-3.67-11.9-8.7-15.69-15.37-3.77-6.65-5.69-14.29-5.69-22.7s1.86-16.17,5.52-22.8c3.65-6.61,8.74-11.63,15.56-15.32,6.84-3.71,14.7-5.59,23.35-5.59Z"/><polygon points="1365.63 210.33 1365.63 302.03 1289.34 210.33 1257.64 210.33 1257.64 365.79 1294.91 365.79 1294.91 272.55 1371.69 365.79 1402.9 365.79 1402.9 210.33 1365.63 210.33"/><path d="m809.03,365.86l-41.5-71.87c1.65-1.14,3.24-2.38,4.74-3.73,9.48-8.56,14.29-19.86,14.29-33.57s-4.74-24.81-14.09-33.47c-9.24-8.56-21.29-12.89-35.82-12.89h-59.93v155.46h37.88v-62.83h14.37l36.24,62.9h43.82Zm-94.43-123.63h13.35c9.8,0,19.83,1.69,19.83,14.26,0,4.92-1.37,8.44-4.19,10.74-3.1,2.53-7.71,3.82-13.71,3.82h-15.27v-28.82Z"/><path d="m504.97,129.7c-136.11,78.58-188.99-79.44-321.41-2.99-132.42,76.45-22,201.26-158.11,279.85-7.65,4.42,115.34-48.13,247.76-124.58,132.42-76.45,236.18-144.63,231.77-152.28Zm-242.39,133.99c-97.47,56.28-134.64,64.26-129.01,61.01,29.88-17.25-33.89-118.04,63.59-174.31,97.47-56.28,152.91,49.32,182.75,32.09,3.22,5.58-19.86,24.94-117.34,81.22Z"/><path d="m400.77,223.59c14.11,61.02-12.35,126.6-69.4,159.54-57.66,33.29-128.56,22.85-174.31-21.03l30.15-15.47c6,4.72,12.42,8.8,19.14,12.21,33.41,16.91,74.43,17.14,109.28-2.98,41.47-23.94,62.34-69.86,56.39-114.55l28.75-17.72Z"/><path d="m257.36,344.01c4.18-2.33,8.34-4.69,12.38-7.27,18.82-11.98,36.2-25.82,50.89-43.12,7.07-8.32,12.54-17.32,16.14-27.19-16.5,9.69-33.27,19.45-50.24,29.25-22.75,13.13-45.21,25.77-67.15,37.86,5.84,3.82,11.83,7.43,17.98,10.82,6.61,3.64,13.38,3.32,19.99-.36Z"/><path d="m323.81,193.63c-1.01-4.82-3.47-8.26-7.65-10.44-.86-.45-1.74-.88-2.64-1.24-17.01-6.87-34.08-13.55-51.38-19.59-3.55-1.24-7.09-1.58-10.7-.38-1.84.62-3.67,1.27-5.5,1.92-8.42,2.97-16.79,6.09-25.11,9.34-7.81,3.05-15.62,6.15-23.37,9.36-4.09,1.7-7.21,4.58-8.41,9.2-.93,3.58-1.59,7.23-2.13,10.9-1.67,11.35-2.34,22.77-2.46,33.5.04,7.93.27,15.11,1.06,22.25.49,4.45,1.18,8.86,2.63,13.11.89,2.6,1.96,5.08,3.17,7.47,18.51-9.57,40.05-21.3,64.82-35.6,26.75-15.44,49.88-29.17,69.21-41.08-.44-2.92-.95-5.82-1.56-8.72Z"/></svg>
+    <div class="topbar-divider"></div>
+    <span class="topbar-product">Fireline</span>
+  </div>
+  <div class="topbar-right">
+    <span>Security Audit Report</span>
+    <a href="https://www.orizon.one/fireline">orizon.one/fireline</a>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Cambia tema">
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg><svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+</div>
+<header class="hero">
+  <div class="hero-badge">
+    <svg width="16" height="16" viewBox="0 0 64 64" fill="var(--brand)" xmlns="http://www.w3.org/2000/svg"><path d="m63.98,15.16c-18.15,10.48-25.2-10.59-42.85-.4C3.47,24.95,18.19,41.6.05,52.07c-1.02.59,15.38-6.42,33.03-16.61,17.66-10.19,31.49-19.28,30.9-20.3Zm-32.32,17.87c-13,7.5-17.95,8.57-17.2,8.13,3.98-2.3-4.52-15.74,8.48-23.24,13-7.5,20.39,6.58,24.37,10.0.0.14-2.65,3.33-15.64,10.83Z"/><path d="m50.09,27.68c1.88,8.14-1.65,16.88-9.25,21.27s-17.14,3.05-23.24-2.8l4.02-2.06c.8.63,1.66,1.17,2.55,1.63,4.45,2.25,9.92,2.29,14.57-.4,5.53-3.19,8.31-9.31,7.52-15.27l3.83-2.36Z"/></svg> Orizon Fireline &mdash; Security Audit
+  </div>
+  <h1>Home - Azienda anonima srl</h1>
+  <p class="subtitle">Analisi di sicurezza &mdash; aziendaanonima.com</p>
+  <p class="powered-by">Powered by <strong>OpenWebSearch AI</strong> &mdash; piattaforma di web intelligence di propriet&agrave; <a href="https://www.orizon.one" style="color:var(--brand)">Orizon srl</a></p>
+  <div class="hero-meta">
+    <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> 06 March 2026</span>
+    <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> 1 target</span>
+    <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg> 16 pagine analizzate</span>
+  </div>
+</header>
+<nav class="nav"><div class="nav-inner">
+  <a href="#overview">Overview</a>
+  <a href="#history-diff">Diff</a>
+  <a href="#probe">Probe</a>
+  <a href="#replay">Replay</a>
+  <a href="#ssl-tls">SSL/TLS</a>
+  <a href="#dns-security">DNS</a>
+  <a href="#security">Security Score</a>
+  <a href="#risk-radar">Risk Radar</a>
+  <a href="#vuln-scan">Vuln Scan</a>
+  <a href="#subdomains">Subdomains</a>
+  <a href="#vulnerabilities">Vulnerabilità</a>
+  <a href="#findings">Findings</a>
+  <a href="#compliance">Compliance</a>
+  <a href="#research">Research</a>
+  <a href="#remediation">Remediation</a>
+  <a href="#headers">Headers</a>
+  <a href="#cookies">Cookies</a>
+  <a href="#technologies">Tecnologie</a>
+  <a href="#sitemap">Sitemap</a>
+  <a href="#site-tree">Architettura</a>
+  <a href="#search-intel">Search Intelligence</a>
+  <a href="#recommendations">Raccomandazioni</a>
+</div></nav>
+<div class="container">
+<section id="overview">
+  <h2 class="section-title"><span class="num">1</span> Executive Overview</h2>
+  <p class="section-desc">Riepilogo dell'audit di sicurezza eseguito tramite <strong style="color:var(--brand)">OpenWebSearch AI</strong> di Orizon.</p>
+  <div class="grid-4">
+    <div class="card stat-box"><div class="stat-val" style="color:var(--critical)">F</div><div class="stat-label">Security Grade</div><div style="font-size:.7rem;margin-top:.35rem;letter-spacing:1px"><span style="color:var(--brand);font-weight:400;opacity:.5">A+</span> <span style="color:var(--brand);font-weight:400;opacity:.5">A</span> <span style="color:var(--medium);font-weight:400;opacity:.5">B</span> <span style="color:var(--high);font-weight:400;opacity:.5">C</span> <span style="color:var(--critical);font-weight:400;opacity:.5">D</span> <span style="color:var(--critical);font-weight:700;opacity:1">F</span></div></div>
+    <div class="card stat-box"><div class="stat-val" style="color:var(--critical)">0<span style="font-size:1rem;color:var(--text-muted)">/100</span></div><div class="stat-label">Security Score</div></div>
+    <div class="card stat-box"><div class="stat-val" style="color:var(--critical)">CRITICO</div><div class="stat-label">Livello di Rischio</div></div>
+    <div class="card stat-box"><div class="stat-val" style="color:var(--critical)">128</div><div class="stat-label">Issues Trovate</div></div>
+  </div>
+  <div class="card" style="margin-top:1rem;padding:.6rem 1rem;text-align:center;font-size:.85rem">Compliance: <span style="color:var(--text-muted)">OWASP ASVS</span> <span style="color:#facc15;font-weight:700">C</span> &nbsp;·&nbsp; <span style="color:var(--text-muted)">PCI DSS</span> <span style="color:#4ade80;font-weight:700">A</span> &nbsp;·&nbsp; <span style="color:var(--text-muted)">GDPR</span> <span style="color:#facc15;font-weight:700">C</span></div>
+  <div class="card" style="margin-top:.5rem;padding:.6rem 1rem;text-align:center;font-size:.85rem">DNS Security: <span style="color:var(--text-muted)">Grade</span> <span style="color:#fb923c;font-weight:700">D</span> &nbsp;·&nbsp; <span style="color:var(--text-muted)">SPF</span> <span style="color:#facc15;font-weight:700">C</span> &nbsp;·&nbsp; <span style="color:var(--text-muted)">DMARC</span> <span style="color:#f87171;font-weight:700">F</span> &nbsp;·&nbsp; <span style="color:var(--text-muted)">DNSSEC</span> <span style="color:#f87171;font-weight:700">No</span></div>
+  <div class="grid-3" style="margin-top:1.5rem">
+    <div class="card stat-box"><div class="stat-val" style="color:var(--info)">17</div><div class="stat-label">URL Scoperte</div></div>
+    <div class="card stat-box"><div class="stat-val" style="color:var(--info)">17</div><div class="stat-label">Pagine Crawlate</div></div>
+    <div class="card stat-box"><div class="stat-val" style="color:var(--brand)">10</div><div class="stat-label">Tecnologie Rilevate</div></div>
+  </div>
+</section>
+<section id="history-diff">
+  <h2 class="section-title"><span class="num">&#x1F4CA;</span> Changes Since Last Scan</h2>
+  <p class="section-desc">Confronto con la scansione precedente: variazioni di punteggio, issues e vulnerabilità.</p>
+  <div class="grid-2">
+    <div class="card" style="text-align:center">
+      <h3>aziendaanonima.com</h3>
+      <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:.75rem">vs scansione del 2026-03-05</div>
+      <div style="font-size:3rem;font-weight:700;color:var(--text-muted)">&#x2194; 0</div>
+      <div style="color:var(--text-secondary);font-size:.9rem">punti di security score</div>
+      <div style="margin-top:1rem;display:flex;justify-content:center;gap:1rem">
+        <div><span style="font-size:.8rem;color:var(--text-muted)">Prima</span><br><span class="badge badge-info">F</span></div>
+        <div style="font-size:1.5rem;color:var(--text-muted);align-self:center">&#x2192;</div>
+        <div><span style="font-size:.8rem;color:var(--text-muted)">Ora</span><br><span class="badge badge-brand">F</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Variazioni</h3>
+      <div style="margin-top:1rem">
+        <div class="finding info">
+          <span class="badge badge-info">Issues invariate (8)</span>
+        </div>
+        <div class="finding info">
+          <span class="badge badge-info">Vulnerabilit&agrave; invariate (4)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<section id="probe">
+  <h2 class="section-title"><span class="num">&#x2139;</span> Target Probe &amp; Recon</h2>
+  <p class="section-desc">Risultati della ricognizione pre-audit: DNS, SSL, protocolli, robots.txt, sitemap.xml.</p>
+  <div class="grid-2">
+    <div class="card">
+      <h3>aziendaanonima.com</h3>
+      <div class="hdr-bar" style="margin-top:.75rem">
+        <div class="hdr-item"><span class="k">IP: </span><span class="v">10.0.0.10</span></div>
+        <span class="badge badge-success">HTTPS OK</span> <span class="badge badge-success">HTTP OK</span>
+      </div>
+    </div>
+  </div>
+</section>
+<section id="replay">
+  <h2 class="section-title"><span class="num">&#x1F504;</span> HTTP Replay</h2>
+  <p class="section-desc">Replay HTTP con analisi TLS, timing, redirect chain e WAF detection.</p>
+  <div class="grid-2">
+    <div class="card">
+      <h3 style="color:var(--brand)">aziendaanonima.com</h3>
+      <div class="grid-2" style="gap:.75rem;margin-top:.75rem">
+        <div><span style="color:var(--text-muted)">Status</span><br><strong style="color:var(--brand)">HTTP 200</strong></div>
+        <div><span style="color:var(--text-muted)">Timing</span><br><strong>169ms</strong></div>
+        <div><span style="color:var(--text-muted)">TLS Protocol</span><br><strong>TLSv1.3</strong></div>
+        <div><span style="color:var(--text-muted)">Cipher</span><br><strong style="font-size:.75rem">TLS_AES_256_GCM_SHA384</strong></div>
+        <div><span style="color:var(--text-muted)">Certificate</span><br><strong style="font-size:.75rem">aziendaanonima.com</strong></div>
+        <div><span style="color:var(--text-muted)">Body Size</span><br><strong>71,611 bytes</strong></div>
+        <div><span style="color:var(--text-muted)">WAF</span><br><strong>None</strong></div>
+        <div><span style="color:var(--text-muted)">Redirects</span><br><strong>1</strong></div>
+      </div>
+      <div style="margin-top:.75rem;font-size:.8rem;color:var(--text-muted)">
+        <div>&rarr; https://aziendaanonima.com <span class="badge" style="font-size:.65rem">HTTP 301</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+<section id="ssl-tls">
+  <h2 class="section-title"><span class="num">&#x1F512;</span> SSL/TLS Security</h2>
+  <p class="section-desc">Analisi approfondita della configurazione SSL/TLS: certificato, versioni TLS, cifrari, catena di trust e HSTS.</p>
+  <div class="grid-2">
+    <div class="card" style="text-align:center">
+      <h3>aziendaanonima.com</h3>
+      <div class="score-ring" style="margin:1rem auto"><svg viewBox="0 0 140 140">
+        <circle class="bg" cx="70" cy="70" r="58"/>
+        <circle class="fg" cx="70" cy="70" r="58" stroke="var(--brand)" stroke-dasharray="364.42444" stroke-dashoffset="0.0"/>
+      </svg><div class="label">
+        <div class="grade">A+</div><div class="pts">SSL/TLS</div>
+      </div></div>
+    </div>
+    <div class="card">
+      <h3>Dettagli SSL/TLS</h3>
+      <div class="hdr-bar" style="margin-top:.75rem">
+        <div class="hdr-item"><span class="k">Subject: </span><span class="v">aziendaanonima.com</span></div>
+      </div>
+      <div class="hdr-bar">
+        <div class="hdr-item"><span class="k">Issuer: </span><span class="v">Let&#x27;s Encrypt / R13</span></div>
+      </div>
+      <div class="hdr-bar">
+        <div class="hdr-item"><span class="k">Scadenza: </span><span class="v">Apr 24 05:21:16 2026 GMT</span></div>
+        <span class="badge badge-medium" style="margin-left:.5rem">48 giorni</span>
+      </div>
+      <div class="hdr-bar">
+        <div class="hdr-item"><span class="k">SAN: </span><span class="v">aziendaanonima.com, www.aziendaanonima.com</span></div>
+      </div>
+      <div style="margin-top:1rem"><strong style="color:var(--text-primary);font-size:.9rem">Versioni TLS</strong></div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem">
+        <span class="badge badge-success">TLSv1.0 &#x2713;</span>
+        <span class="badge badge-success">TLSv1.1 &#x2713;</span>
+        <span class="badge badge-success">TLSv1.2 &#x2713;</span>
+        <span class="badge badge-success">TLSv1.3 &#x2713;</span>
+      </div>
+      <div style="margin-top:1rem"><strong style="color:var(--text-primary);font-size:.9rem">Cifrario Negoziato</strong></div>
+      <div class="hdr-bar" style="margin-top:.5rem">
+        <div class="hdr-item"><span class="v" style="font-family:monospace;font-size:.8rem">TLS_AES_256_GCM_SHA384</span></div>
+        <span class="badge badge-success" style="margin-left:.5rem">STRONG</span>
+        <span style="font-size:.8rem;color:var(--text-muted);margin-left:.25rem">256-bit</span>
+      </div>
+      <div style="margin-top:1rem">
+        <span class="badge badge-success">Catena Valida &#x2713;</span>
+        <span class="badge badge-medium" style="margin-left:.5rem">HSTS Non Attivo</span>
+      </div>
+    </div>
+  </div>
+</section>
+<section id="search-intel">
+  <h2 class="section-title"><span class="num">&#x1F50D;</span> Search Intelligence</h2>
+  <p class="section-desc">Risultati della ricerca web e informazioni pubbliche raccolte su ogni target.</p>
+  <div class="card" style="overflow-x:auto;margin-top:1rem"><table>
+    <thead><tr><th>Titolo</th><th>URL</th><th>Score</th></tr></thead><tbody>
+    <tr><td style="max-width:300px">Home - Azienda anonima srl</td>
+        <td style="max-width:350px;word-break:break-all"><a href="https://www.aziendaanonima.com/en/" target="_blank" rel="noopener"><code style="font-size:.75rem">https://www.aziendaanonima.com/en/</code></a></td>
+        <td><span class="badge badge-info">13%</span></td></tr>
+    <tr><td style="max-width:300px">Main Customers - Azienda anonima srl</td>
+        <td style="max-width:350px;word-break:break-all"><a href="https://www.aziendaanonima.com/en/main-customers/" target="_blank" rel="noopener"><code style="font-size:.75rem">https://www.aziendaanonima.com/en/main-customers/</code></a></td>
+        <td><span class="badge badge-info">3%</span></td></tr>
+    <tr><td style="max-width:300px">Quality - Azienda anonima srl</td>
+        <td style="max-width:350px;word-break:break-all"><a href="https://www.aziendaanonima.com/en/quality/" target="_blank" rel="noopener"><code style="font-size:.75rem">https://www.aziendaanonima.com/en/quality/</code></a></td>
+        <td><span class="badge badge-info">2%</span></td></tr>
+    <tr><td style="max-width:300px">Milling machines &amp; Softwares - Azienda anonima srl</td>
+        <td style="max-width:350px;word-break:break-all"><a href="https://www.aziendaanonima.com/en/milling-machines-softwares/" target="_blank" rel="noopener"><code style="font-size:.75rem">https://www.aziendaanonima.com/en/milling-machines-softwares/</code></a></td>
+        <td><span class="badge badge-info">1%</span></td></tr>
+    <tr><td style="max-width:300px">Loast Foam-Polycast - Azienda anonima srl</td>
+        <td style="max-width:350px;word-break:break-all"><a href="https://www.aziendaanonima.com/en/foundry-toolings/loast-foam-polycast/" target="_blank" rel="noopener"><code style="font-size:.75rem">https://www.aziendaanonima.com/en/foundry-toolings/loast-foam-polycast/</code></a></td>
+        <td><span class="badge badge-info">1%</span></td></tr>
+    <tr><td style="max-width:300px">Hydroforming - Azienda anonima srl</td>
+        <td style="max-width:350px;word-break:break-all"><a href="https://www.aziendaanonima.com/en/foundry-toolings/hydroforming/" target="_blank" rel="noopener"><code style="font-size:.75rem">https://www.aziendaanonima.com/en/foundry-toolings/hydroforming/</code></a></td>
+        <td><span class="badge badge-info">1%</span></td></tr>
+    <tr><td style="max-width:300px">Mass production - Azienda anonima srl</td>
+        <td style="max-width:350px;word-break:break-all"><a href="https://www.aziendaanonima.com/en/foundry-toolings/mass-production/" target="_blank" rel="noopener"><code style="font-size:.75rem">https://www.aziendaanonima.com/en/foundry-toolings/mass-production/</code></a></td>
+        <td><span class="badge badge-info">6%</span></td></tr>
+    <tr><td style="max-width:300px">Machinings - Azienda anonima srl</td>
+        <td style="max-width:350px;word-break:break-all"><a href="https://www.aziendaanonima.com/en/machinings/" target="_blank" rel="noopener"><code style="font-size:.75rem">https://www.aziendaanonima.com/en/machinings/</code></a></td>
+        <td><span class="badge badge-info">4%</span></td></tr>
+    <tr><td style="max-width:300px">Foundry Toolings - Azienda anonima srl</td>
+        <td style="max-width:350px;word-break:break-all"><a href="https://www.aziendaanonima.com/en/foundry-toolings/" target="_blank" rel="noopener"><code style="font-size:.75rem">https://www.aziendaanonima.com/en/foundry-toolings/</code></a></td>
+        <td><span class="badge badge-info">12%</span></td></tr>
+    <tr><td style="max-width:300px">Prototypes from casting - Azienda anonima srl</td>
+        <td style="max-width:350px;word-break:break-all"><a href="https://www.aziendaanonima.com/en/machinings/prototypes-from-casting/" target="_blank" rel="noopener"><code style="font-size:.75rem">https://www.aziendaanonima.com/en/machinings/prototypes-from-casting/</code></a></td>
+        <td><span class="badge badge-info">11%</span></td></tr>
+    </tbody></table></div>
+  <div style="margin-top:.75rem;font-size:.85rem;color:var(--text-muted)">
+    Totale URL scoperte: <strong style="color:var(--info)">0</strong>
+  </div>
+</section>
+<section id="security">
+  <h2 class="section-title"><span class="num">2</span> Security Score</h2>
+  <p class="section-desc">Punteggio di sicurezza basato sugli header HTTP rilevati.</p>
+  <div class="grid-2">
+    <div class="card" style="text-align:center">
+      <div class="score-ring"><svg viewBox="0 0 140 140">
+        <circle class="bg" cx="70" cy="70" r="58"/>
+        <circle class="fg" cx="70" cy="70" r="58" stroke="var(--critical)" stroke-dasharray="364.4" stroke-dashoffset="364.4"/>
+      </svg><div class="label">
+        <div class="grade">F</div><div class="pts">0 / 100</div>
+      </div></div>
+      <div style="color:var(--text-secondary);font-size:.85rem">Score su 16 pagine</div>
+      <div style="margin-top:1rem;padding:.6rem 1.2rem;border-radius:8px;background:var(--critical)20;border:1px solid var(--critical);display:inline-block">
+        <span style="color:var(--critical);font-weight:700;font-size:1.1rem">Livello di Rischio: CRITICO</span>
+      </div>
+    </div>
+    <div class="card"><h3 style="margin-bottom:1rem">Breakdown del Punteggio</h3>
+      <div class="gauge-row"><div class="gauge-label">HSTS</div>
+        <div class="gauge-bar"><div class="gauge-fill" style="width:0%;background:var(--critical)"></div></div>
+        <div class="gauge-val" style="color:var(--critical)">0/20</div></div>
+      <div class="gauge-row"><div class="gauge-label">Content-Security-Policy</div>
+        <div class="gauge-bar"><div class="gauge-fill" style="width:0%;background:var(--critical)"></div></div>
+        <div class="gauge-val" style="color:var(--critical)">0/20</div></div>
+      <div class="gauge-row"><div class="gauge-label">X-Content-Type-Options</div>
+        <div class="gauge-bar"><div class="gauge-fill" style="width:0%;background:var(--critical)"></div></div>
+        <div class="gauge-val" style="color:var(--critical)">0/15</div></div>
+      <div class="gauge-row"><div class="gauge-label">X-Frame-Options</div>
+        <div class="gauge-bar"><div class="gauge-fill" style="width:0%;background:var(--critical)"></div></div>
+        <div class="gauge-val" style="color:var(--critical)">0/15</div></div>
+      <div class="gauge-row"><div class="gauge-label">X-XSS-Protection</div>
+        <div class="gauge-bar"><div class="gauge-fill" style="width:0%;background:var(--critical)"></div></div>
+        <div class="gauge-val" style="color:var(--critical)">0/10</div></div>
+      <div class="gauge-row"><div class="gauge-label">Referrer-Policy</div>
+        <div class="gauge-bar"><div class="gauge-fill" style="width:0%;background:var(--critical)"></div></div>
+        <div class="gauge-val" style="color:var(--critical)">0/10</div></div>
+      <div class="gauge-row"><div class="gauge-label">Permissions-Policy</div>
+        <div class="gauge-bar"><div class="gauge-fill" style="width:0%;background:var(--critical)"></div></div>
+        <div class="gauge-val" style="color:var(--critical)">0/10</div></div>
+    </div>
+  </div>
+</section>
+<section id="risk-radar">
+  <h2 class="section-title"><span class="num">&#x1F3AF;</span> Risk Positioning</h2>
+  <p class="section-desc">Posizionamento del rischio basato sugli header di sicurezza HTTP. Ogni asse rappresenta una dimensione di protezione. Il grafico mostra la copertura attuale rispetto alla copertura ideale.</p>
+  <div style="display:flex;align-items:center;gap:1rem;padding:1rem 1.5rem;background:var(--critical-bg);border:1px solid var(--critical-border);border-radius:8px;margin-bottom:2rem">
+    <span class="badge badge-critical" style="font-size:.85rem;padding:.4rem 1rem">Rischio Critico</span>
+    <span style="font-size:.9rem;color:var(--text-primary)">Copertura sicurezza: <strong style="color:var(--critical)">0/7</strong> header di protezione attivi (<strong style="color:var(--critical)">0%</strong>)</span>
+  </div>
+  <div class="grid-2">
+    <div class="card" style="text-align:center;padding:2rem;display:flex;align-items:center;justify-content:center">
+      <svg viewBox="0 0 460 460" xmlns="http://www.w3.org/2000/svg" style="max-width:460px;width:100%;height:auto">
+  <defs>
+    <radialGradient id="radar-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="var(--brand)" stop-opacity="0.04"/>
+      <stop offset="100%" stop-color="var(--bg-primary)" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <circle cx="230.0" cy="230.0" r="157" fill="url(#radar-glow)"/>
+  <polygon points="230.0,82.8 345.1,138.2 373.5,262.8 293.9,362.6 166.1,362.6 86.5,262.8 114.9,138.2" fill="var(--bg-elevated)" fill-opacity="0.5" stroke="none"/>
+  <polygon points="230.0,193.2 258.8,207.1 265.9,238.2 246.0,263.2 214.0,263.2 194.1,238.2 201.2,207.1" fill="none" stroke="var(--border)" stroke-width="0.6" opacity="0.2"/>
+  <polygon points="230.0,156.4 287.5,184.1 301.8,246.4 261.9,296.3 198.1,296.3 158.2,246.4 172.5,184.1" fill="none" stroke="var(--border)" stroke-width="0.6" opacity="0.2"/>
+  <polygon points="230.0,119.6 316.3,161.2 337.6,254.6 277.9,329.5 182.1,329.5 122.4,254.6 143.7,161.2" fill="none" stroke="var(--border)" stroke-width="0.6" opacity="0.2"/>
+  <polygon points="230.0,82.8 345.1,138.2 373.5,262.8 293.9,362.6 166.1,362.6 86.5,262.8 114.9,138.2" fill="none" stroke="var(--border)" stroke-width="1.2" opacity="0.45"/>
+  <text x="234" y="190.2" style="font-family:'JetBrains Mono',monospace;font-size:9px;fill:var(--text-muted);opacity:0.6" text-anchor="start">25%</text>
+  <text x="234" y="153.4" style="font-family:'JetBrains Mono',monospace;font-size:9px;fill:var(--text-muted);opacity:0.6" text-anchor="start">50%</text>
+  <text x="234" y="116.6" style="font-family:'JetBrains Mono',monospace;font-size:9px;fill:var(--text-muted);opacity:0.6" text-anchor="start">75%</text>
+  <text x="234" y="79.8" style="font-family:'JetBrains Mono',monospace;font-size:9px;fill:var(--text-muted);opacity:0.6" text-anchor="start">100%</text>
+  <line x1="230.0" y1="230.0" x2="230.0" y2="82.8" stroke="var(--border)" stroke-width="0.8" opacity="0.35"/>
+  <line x1="230.0" y1="230.0" x2="345.1" y2="138.2" stroke="var(--border)" stroke-width="0.8" opacity="0.35"/>
+  <line x1="230.0" y1="230.0" x2="373.5" y2="262.8" stroke="var(--border)" stroke-width="0.8" opacity="0.35"/>
+  <line x1="230.0" y1="230.0" x2="293.9" y2="362.6" stroke="var(--border)" stroke-width="0.8" opacity="0.35"/>
+  <line x1="230.0" y1="230.0" x2="166.1" y2="362.6" stroke="var(--border)" stroke-width="0.8" opacity="0.35"/>
+  <line x1="230.0" y1="230.0" x2="86.5" y2="262.8" stroke="var(--border)" stroke-width="0.8" opacity="0.35"/>
+  <line x1="230.0" y1="230.0" x2="114.9" y2="138.2" stroke="var(--border)" stroke-width="0.8" opacity="0.35"/>
+  <polygon points="230.0,212.3 243.8,219.0 247.2,233.9 237.7,245.9 222.3,245.9 212.8,233.9 216.2,219.0" fill="var(--critical)" fill-opacity="0.08" stroke="var(--critical)" stroke-width="2" stroke-opacity="0.8"/>
+  <circle cx="230.0" cy="82.8" r="2" fill="var(--border)" opacity="0.5"/>
+  <circle cx="230.0" cy="212.3" r="8" fill="var(--critical-bg)" opacity="0.5"/>
+  <circle cx="230.0" cy="212.3" r="5" fill="var(--critical)" stroke="var(--bg-primary)" stroke-width="2"/>
+  <text x="230.0" y="40.8" text-anchor="middle" style="font-family:Inter,sans-serif;font-size:11px;font-weight:600;fill:var(--text-primary)"><tspan style="fill:var(--critical)">&#x25CB;</tspan> HSTS</text>
+  <text x="230.0" y="53.8" text-anchor="middle" style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;fill:var(--critical)">FAIL</text>
+  <circle cx="345.1" cy="138.2" r="2" fill="var(--border)" opacity="0.5"/>
+  <circle cx="243.8" cy="219.0" r="8" fill="var(--critical-bg)" opacity="0.5"/>
+  <circle cx="243.8" cy="219.0" r="5" fill="var(--critical)" stroke="var(--bg-primary)" stroke-width="2"/>
+  <text x="373.2" y="109.8" text-anchor="start" style="font-family:Inter,sans-serif;font-size:11px;font-weight:600;fill:var(--text-primary)"><tspan style="fill:var(--critical)">&#x25CB;</tspan> Content-Security-Policy</text>
+  <text x="373.2" y="122.8" text-anchor="start" style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;fill:var(--critical)">FAIL</text>
+  <circle cx="373.5" cy="262.8" r="2" fill="var(--border)" opacity="0.5"/>
+  <circle cx="247.2" cy="233.9" r="8" fill="var(--critical-bg)" opacity="0.5"/>
+  <circle cx="247.2" cy="233.9" r="5" fill="var(--critical)" stroke="var(--bg-primary)" stroke-width="2"/>
+  <text x="408.6" y="275.8" text-anchor="start" style="font-family:Inter,sans-serif;font-size:11px;font-weight:600;fill:var(--text-primary)"><tspan style="fill:var(--critical)">&#x25CB;</tspan> X-Content-Type-Options</text>
+  <text x="408.6" y="288.8" text-anchor="start" style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;fill:var(--critical)">FAIL</text>
+  <circle cx="293.9" cy="362.6" r="2" fill="var(--border)" opacity="0.5"/>
+  <circle cx="237.7" cy="245.9" r="8" fill="var(--critical-bg)" opacity="0.5"/>
+  <circle cx="237.7" cy="245.9" r="5" fill="var(--critical)" stroke="var(--bg-primary)" stroke-width="2"/>
+  <text x="309.5" y="409.1" text-anchor="start" style="font-family:Inter,sans-serif;font-size:11px;font-weight:600;fill:var(--text-primary)"><tspan style="fill:var(--critical)">&#x25CB;</tspan> X-Frame-Options</text>
+  <text x="309.5" y="422.1" text-anchor="start" style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;fill:var(--critical)">FAIL</text>
+  <circle cx="166.1" cy="362.6" r="2" fill="var(--border)" opacity="0.5"/>
+  <circle cx="222.3" cy="245.9" r="8" fill="var(--critical-bg)" opacity="0.5"/>
+  <circle cx="222.3" cy="245.9" r="5" fill="var(--critical)" stroke="var(--bg-primary)" stroke-width="2"/>
+  <text x="150.5" y="409.1" text-anchor="end" style="font-family:Inter,sans-serif;font-size:11px;font-weight:600;fill:var(--text-primary)"><tspan style="fill:var(--critical)">&#x25CB;</tspan> X-XSS-Protection</text>
+  <text x="150.5" y="422.1" text-anchor="end" style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;fill:var(--critical)">FAIL</text>
+  <circle cx="86.5" cy="262.8" r="2" fill="var(--border)" opacity="0.5"/>
+  <circle cx="212.8" cy="233.9" r="8" fill="var(--critical-bg)" opacity="0.5"/>
+  <circle cx="212.8" cy="233.9" r="5" fill="var(--critical)" stroke="var(--bg-primary)" stroke-width="2"/>
+  <text x="51.4" y="275.8" text-anchor="end" style="font-family:Inter,sans-serif;font-size:11px;font-weight:600;fill:var(--text-primary)"><tspan style="fill:var(--critical)">&#x25CB;</tspan> Referrer-Policy</text>
+  <text x="51.4" y="288.8" text-anchor="end" style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;fill:var(--critical)">FAIL</text>
+  <circle cx="114.9" cy="138.2" r="2" fill="var(--border)" opacity="0.5"/>
+  <circle cx="216.2" cy="219.0" r="8" fill="var(--critical-bg)" opacity="0.5"/>
+  <circle cx="216.2" cy="219.0" r="5" fill="var(--critical)" stroke="var(--bg-primary)" stroke-width="2"/>
+  <text x="86.8" y="109.8" text-anchor="end" style="font-family:Inter,sans-serif;font-size:11px;font-weight:600;fill:var(--text-primary)"><tspan style="fill:var(--critical)">&#x25CB;</tspan> Permissions-Policy</text>
+  <text x="86.8" y="122.8" text-anchor="end" style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;fill:var(--critical)">FAIL</text>
+  <circle cx="230.0" cy="230.0" r="28" fill="var(--bg-secondary)" stroke="var(--border)" stroke-width="1"/>
+  <text x="230.0" y="226.0" text-anchor="middle" style="font-family:Inter,sans-serif;font-size:22px;font-weight:800;fill:var(--critical)">0</text>
+  <text x="230.0" y="242.0" text-anchor="middle" style="font-family:'JetBrains Mono',monospace;font-size:8px;fill:var(--text-muted)">/100</text>
+</svg>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:.5rem;color:var(--text-primary)">Dettaglio Dimensioni</h3>
+      <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:1.25rem">Stato degli header di sicurezza HTTP rilevati</p>
+      <div style="margin-bottom:.85rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.3rem">
+          <span style="display:flex;align-items:center;gap:.5rem;font-size:.82rem;font-weight:600;color:var(--text-primary)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="color:var(--critical)"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M15 9l-6 6M9 9l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> HSTS
+          </span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:600;color:var(--critical)">ASSENTE</span>
+        </div>
+        <div style="height:4px;background:var(--bg-elevated);border-radius:2px;overflow:hidden">
+          <div style="width:3%;height:100%;background:var(--critical);border-radius:2px;transition:width .8s ease"></div>
+        </div>
+      </div>
+      <div style="margin-bottom:.85rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.3rem">
+          <span style="display:flex;align-items:center;gap:.5rem;font-size:.82rem;font-weight:600;color:var(--text-primary)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="color:var(--critical)"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M15 9l-6 6M9 9l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Content-Security-Policy
+          </span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:600;color:var(--critical)">ASSENTE</span>
+        </div>
+        <div style="height:4px;background:var(--bg-elevated);border-radius:2px;overflow:hidden">
+          <div style="width:3%;height:100%;background:var(--critical);border-radius:2px;transition:width .8s ease"></div>
+        </div>
+      </div>
+      <div style="margin-bottom:.85rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.3rem">
+          <span style="display:flex;align-items:center;gap:.5rem;font-size:.82rem;font-weight:600;color:var(--text-primary)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="color:var(--critical)"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M15 9l-6 6M9 9l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> X-Content-Type-Options
+          </span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:600;color:var(--critical)">ASSENTE</span>
+        </div>
+        <div style="height:4px;background:var(--bg-elevated);border-radius:2px;overflow:hidden">
+          <div style="width:3%;height:100%;background:var(--critical);border-radius:2px;transition:width .8s ease"></div>
+        </div>
+      </div>
+      <div style="margin-bottom:.85rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.3rem">
+          <span style="display:flex;align-items:center;gap:.5rem;font-size:.82rem;font-weight:600;color:var(--text-primary)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="color:var(--critical)"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M15 9l-6 6M9 9l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> X-Frame-Options
+          </span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:600;color:var(--critical)">ASSENTE</span>
+        </div>
+        <div style="height:4px;background:var(--bg-elevated);border-radius:2px;overflow:hidden">
+          <div style="width:3%;height:100%;background:var(--critical);border-radius:2px;transition:width .8s ease"></div>
+        </div>
+      </div>
+      <div style="margin-bottom:.85rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.3rem">
+          <span style="display:flex;align-items:center;gap:.5rem;font-size:.82rem;font-weight:600;color:var(--text-primary)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="color:var(--critical)"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M15 9l-6 6M9 9l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> X-XSS-Protection
+          </span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:600;color:var(--critical)">ASSENTE</span>
+        </div>
+        <div style="height:4px;background:var(--bg-elevated);border-radius:2px;overflow:hidden">
+          <div style="width:3%;height:100%;background:var(--critical);border-radius:2px;transition:width .8s ease"></div>
+        </div>
+      </div>
+      <div style="margin-bottom:.85rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.3rem">
+          <span style="display:flex;align-items:center;gap:.5rem;font-size:.82rem;font-weight:600;color:var(--text-primary)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="color:var(--critical)"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M15 9l-6 6M9 9l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Referrer-Policy
+          </span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:600;color:var(--critical)">ASSENTE</span>
+        </div>
+        <div style="height:4px;background:var(--bg-elevated);border-radius:2px;overflow:hidden">
+          <div style="width:3%;height:100%;background:var(--critical);border-radius:2px;transition:width .8s ease"></div>
+        </div>
+      </div>
+      <div style="margin-bottom:.85rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.3rem">
+          <span style="display:flex;align-items:center;gap:.5rem;font-size:.82rem;font-weight:600;color:var(--text-primary)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="color:var(--critical)"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M15 9l-6 6M9 9l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Permissions-Policy
+          </span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:600;color:var(--critical)">ASSENTE</span>
+        </div>
+        <div style="height:4px;background:var(--bg-elevated);border-radius:2px;overflow:hidden">
+          <div style="width:3%;height:100%;background:var(--critical);border-radius:2px;transition:width .8s ease"></div>
+        </div>
+      </div>
+      <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem">
+          <span style="font-size:.85rem;font-weight:600;color:var(--text-primary)">Copertura Totale</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:800;color:var(--critical)">0%</span>
+        </div>
+        <div style="height:8px;background:var(--bg-elevated);border-radius:4px;overflow:hidden">
+          <div style="width:2%;height:100%;background:var(--critical);border-radius:4px"></div>
+        </div>
+        <div style="font-size:.72rem;color:var(--text-muted);margin-top:.4rem">0 su 7 header di protezione configurati</div>
+      </div>
+    </div>
+  </div>
+</section>
+<section id="vuln-scan">
+  <h2 class="section-title"><span class="num">&#x1F6E1;</span> Vulnerability Scan</h2>
+  <p class="section-desc">Risultati della scansione attiva: test di sicurezza su percorsi, CORS, redirect, file sensibili.</p>
+  <div class="card">
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center">
+      <span style="font-size:1.5rem;font-weight:700;color:var(--text-primary)">4</span>
+      <span style="color:var(--text-muted)">vulnerabilit&agrave; trovate su 54 percorsi testati</span>
+    </div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.75rem">
+      <span class="badge badge-info">4 Info</span>
+    </div>
+  </div>
+  <div class="finding info">
+    <span class="finding-tag"><span class="badge badge-info">Info</span> <span class="badge badge-info">subdomain_enum</span> <span class="badge" style="background:rgba(251,146,60,.15);color:#fb923c;font-size:.7rem">A05:2021</span> <span class="badge" style="background:rgba(161,161,170,.15);color:#a1a1aa;font-size:.7rem">CWE-200</span></span>
+    <div class="finding-title">Found 4 active subdomain(s)</div>
+    <div style="margin-top:.35rem;font-size:.8rem">
+      <a href="https://aziendaanonima.com" target="_blank" rel="noopener" style="color:var(--brand);word-break:break-all">&#x1F517; https://aziendaanonima.com</a>
+    </div>
+    <div class="finding-text">Subdomain enumeration via DNS brute-force (39 prefixes) + crt.sh CT logs (1 certificates) discovered 4 active subdomains for aziendaanonima.com. These expand the attack surface and should be monitored.</div>
+    <div style="margin-top:.25rem;font-size:.8rem;color:#a1a1aa">OWASP: Security Misconfiguration</div>
+    <div style="margin-top:.5rem"><code style="font-size:.75rem;color:var(--text-muted)">www.aziendaanonima.com (10.0.0.10); ftp.aziendaanonima.com (10.0.0.10); webmail.aziendaanonima.com (10.0.0.20); pop.aziendaanonima.com (10.0.0.20)</code></div>
+    <div style="margin-top:.5rem;font-size:.85rem;color:var(--brand)">&#x2794; Review all subdomains for proper security configuration. Decommission unused subdomains.</div>
+  </div>
+  <div class="finding info">
+    <span class="finding-tag"><span class="badge badge-info">Info</span> <span class="badge badge-info">subdomain_enum</span> <span class="badge" style="background:rgba(251,146,60,.15);color:#fb923c;font-size:.7rem">A05:2021</span> <span class="badge" style="background:rgba(161,161,170,.15);color:#a1a1aa;font-size:.7rem">CWE-200</span></span>
+    <div class="finding-title">Subdomain reachable: ftp.aziendaanonima.com</div>
+    <div style="margin-top:.35rem;font-size:.8rem">
+      <a href="https://ftp.aziendaanonima.com" target="_blank" rel="noopener" style="color:var(--brand);word-break:break-all">&#x1F517; https://ftp.aziendaanonima.com</a>
+    </div>
+    <div class="finding-text">HTTP probe confirmed ftp.aziendaanonima.com is reachable at https://ftp.aziendaanonima.com. Status: 200, Title: Domain Default page</div>
+    <div style="margin-top:.25rem;font-size:.8rem;color:#a1a1aa">OWASP: Security Misconfiguration</div>
+    <div style="margin-top:.5rem"><code style="font-size:.75rem;color:var(--text-muted)">HTTP 200</code></div>
+    <div style="margin-top:.5rem;font-size:.85rem;color:var(--brand)">&#x2794; Ensure subdomain has proper security controls.</div>
+  </div>
+  <div class="finding info">
+    <span class="finding-tag"><span class="badge badge-info">Info</span> <span class="badge badge-info">subdomain_enum</span> <span class="badge" style="background:rgba(251,146,60,.15);color:#fb923c;font-size:.7rem">A05:2021</span> <span class="badge" style="background:rgba(161,161,170,.15);color:#a1a1aa;font-size:.7rem">CWE-200</span></span>
+    <div class="finding-title">Subdomain reachable: webmail.aziendaanonima.com</div>
+    <div style="margin-top:.35rem;font-size:.8rem">
+      <a href="https://webmail.aziendaanonima.com" target="_blank" rel="noopener" style="color:var(--brand);word-break:break-all">&#x1F517; https://webmail.aziendaanonima.com</a>
+    </div>
+    <div class="finding-text">HTTP probe confirmed webmail.aziendaanonima.com is reachable at https://webmail.aziendaanonima.com. Status: 404, Title: 404 Not Found</div>
+    <div style="margin-top:.25rem;font-size:.8rem;color:#a1a1aa">OWASP: Security Misconfiguration</div>
+    <div style="margin-top:.5rem"><code style="font-size:.75rem;color:var(--text-muted)">HTTP 404</code></div>
+    <div style="margin-top:.5rem;font-size:.85rem;color:var(--brand)">&#x2794; Ensure subdomain has proper security controls.</div>
+  </div>
+  <div class="finding info">
+    <span class="finding-tag"><span class="badge badge-info">Info</span> <span class="badge badge-info">subdomain_enum</span> <span class="badge" style="background:rgba(251,146,60,.15);color:#fb923c;font-size:.7rem">A05:2021</span> <span class="badge" style="background:rgba(161,161,170,.15);color:#a1a1aa;font-size:.7rem">CWE-200</span></span>
+    <div class="finding-title">Subdomain reachable: pop.aziendaanonima.com</div>
+    <div style="margin-top:.35rem;font-size:.8rem">
+      <a href="https://pop.aziendaanonima.com" target="_blank" rel="noopener" style="color:var(--brand);word-break:break-all">&#x1F517; https://pop.aziendaanonima.com</a>
+    </div>
+    <div class="finding-text">HTTP probe confirmed pop.aziendaanonima.com is reachable at https://pop.aziendaanonima.com. Status: 404, Title: 404 Not Found</div>
+    <div style="margin-top:.25rem;font-size:.8rem;color:#a1a1aa">OWASP: Security Misconfiguration</div>
+    <div style="margin-top:.5rem"><code style="font-size:.75rem;color:var(--text-muted)">HTTP 404</code></div>
+    <div style="margin-top:.5rem;font-size:.85rem;color:var(--brand)">&#x2794; Ensure subdomain has proper security controls.</div>
+  </div>
+</section>
+<section id="subdomains">
+  <h2 class="section-title"><span class="num">&#x1F310;</span> Subdomain Audit</h2>
+  <p class="section-desc">Analisi completa dei sottodomini scoperti via DNS brute-force e Certificate Transparency (crt.sh).</p>
+  <div style="margin-bottom:1rem"><span class="badge badge-brand">3 sottodomini analizzati</span></div>
+  <div class="grid-2">
+    <div class="card">
+      <h3 style="margin-bottom:.5rem"><a href="https://ftp.aziendaanonima.com" target="_blank" rel="noopener" style="color:var(--brand);text-decoration:none">ftp.aziendaanonima.com</a></h3>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+        <span class="badge badge-critical">SSL: F</span>
+        <span class="badge badge-critical">Score: F</span>
+      </div>
+      <div style="margin-top:.75rem;font-size:.85rem;color:var(--text-muted)">Nessuna vulnerabilit&agrave; rilevata</div>
+      <div style="margin-top:.5rem;display:flex;gap:.25rem;flex-wrap:wrap">
+        <span class="badge badge-info" style="font-size:.7rem">Nginx</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:.5rem"><a href="https://webmail.aziendaanonima.com" target="_blank" rel="noopener" style="color:var(--brand);text-decoration:none">webmail.aziendaanonima.com</a></h3>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+        <span class="badge badge-critical">SSL: F</span>
+        <span class="badge badge-critical">Score: F</span>
+      </div>
+      <div style="margin-top:.75rem;font-size:.85rem;color:var(--text-muted)">Nessuna vulnerabilit&agrave; rilevata</div>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:.5rem"><a href="https://pop.aziendaanonima.com" target="_blank" rel="noopener" style="color:var(--brand);text-decoration:none">pop.aziendaanonima.com</a></h3>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+        <span class="badge badge-critical">SSL: F</span>
+        <span class="badge badge-critical">Score: F</span>
+      </div>
+      <div style="margin-top:.75rem;font-size:.85rem;color:var(--text-muted)">Nessuna vulnerabilit&agrave; rilevata</div>
+    </div>
+  </div>
+</section>
+<section id="vulnerabilities">
+  <h2 class="section-title"><span class="num">3</span> Vulnerabilità Rilevate</h2>
+  <p class="section-desc">Issues consolidate trovate durante l'audit.</p>
+  <div class="finding critical">
+    <span class="finding-tag"><span class="badge badge-critical">Critica</span></span>
+    <div class="finding-title">Missing HSTS header — site doesn&#x27;t enforce HTTPS</div>
+    <div class="finding-text">Rilevata su 16 pagina/e analizzate.</div>
+  </div>
+  <div class="finding medium">
+    <span class="finding-tag"><span class="badge badge-medium">Media</span></span>
+    <div class="finding-title">Missing Content-Security-Policy — vulnerable to XSS injection</div>
+    <div class="finding-text">Rilevata su 16 pagina/e analizzate.</div>
+  </div>
+  <div class="finding medium">
+    <span class="finding-tag"><span class="badge badge-medium">Media</span></span>
+    <div class="finding-title">Missing X-Content-Type-Options — vulnerable to MIME sniffing</div>
+    <div class="finding-text">Rilevata su 16 pagina/e analizzate.</div>
+  </div>
+  <div class="finding medium">
+    <span class="finding-tag"><span class="badge badge-medium">Media</span></span>
+    <div class="finding-title">Missing X-Frame-Options — vulnerable to clickjacking</div>
+    <div class="finding-text">Rilevata su 16 pagina/e analizzate.</div>
+  </div>
+  <div class="finding medium">
+    <span class="finding-tag"><span class="badge badge-medium">Media</span></span>
+    <div class="finding-title">Missing X-XSS-Protection header</div>
+    <div class="finding-text">Rilevata su 16 pagina/e analizzate.</div>
+  </div>
+  <div class="finding medium">
+    <span class="finding-tag"><span class="badge badge-medium">Media</span></span>
+    <div class="finding-title">Missing Referrer-Policy — may leak sensitive URLs</div>
+    <div class="finding-text">Rilevata su 16 pagina/e analizzate.</div>
+  </div>
+  <div class="finding medium">
+    <span class="finding-tag"><span class="badge badge-medium">Media</span></span>
+    <div class="finding-title">Missing Permissions-Policy — browser features not restricted</div>
+    <div class="finding-text">Rilevata su 16 pagina/e analizzate.</div>
+  </div>
+  <div class="finding medium">
+    <span class="finding-tag"><span class="badge badge-medium">Media</span></span>
+    <div class="finding-title">X-Powered-By header exposes technology stack</div>
+    <div class="finding-text">Rilevata su 16 pagina/e analizzate.</div>
+  </div>
+</section>
+<section id="dns-security">
+  <h2 class="section-title"><span class="num">&#x1F310;</span> DNS Security</h2>
+  <p class="section-desc">Analisi sicurezza DNS: SPF, DKIM, DMARC, DNSSEC.</p>
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem">
+      <span style="font-size:2rem;font-weight:800;color:#fb923c">D</span>
+      <span style="color:var(--text-muted)">DNS Security Grade — aziendaanonima.com</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem">
+      <div class="card" style="padding:.75rem"><b style="color:#4ade80">SPF</b>: Present (Grade C)</div>
+      <div class="card" style="padding:.75rem"><b style="color:#f87171">DMARC</b>: MISSING (Policy: None)</div>
+      <div class="card" style="padding:.75rem"><b style="color:#fb923c">DKIM</b>: Not found</div>
+      <div class="card" style="padding:.75rem"><b style="color:#fb923c">DNSSEC</b>: Disabled</div>
+    </div>
+  </div>
+</section>
+<section id="compliance">
+  <h2 class="section-title"><span class="num">&#x2696;</span> Compliance</h2>
+  <p class="section-desc">Mappatura risultati su framework di compliance: OWASP ASVS, PCI DSS, GDPR.</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem">
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem">
+        <span style="font-size:1.8rem;font-weight:800;color:#facc15">C</span>
+        <div>
+          <div style="font-weight:600;color:var(--text-primary)">OWASP-ASVS</div>
+          <div style="font-size:.8rem;color:var(--text-muted)">4.0.3 (Level 1)</div>
+        </div>
+      </div>
+      <div style="background:var(--bg-card);border-radius:4px;height:8px;overflow:hidden;margin-bottom:.5rem">
+        <div style="width:80%;height:100%;background:#facc15;border-radius:4px"></div>
+      </div>
+      <div style="font-size:.85rem;color:var(--text-muted)">8 pass / 2 fail</div>
+      <div style="font-size:.8rem;padding:.25rem 0;border-top:1px solid rgba(255,255,255,.05)">
+        &#x274C; <b>V3.4.1</b> Cookie Security Attributes
+      </div>
+      <div style="font-size:.8rem;padding:.25rem 0;border-top:1px solid rgba(255,255,255,.05)">
+        &#x2705; <b>V4.1.1</b> Access Control at Server Side
+      </div>
+      <div style="font-size:.8rem;padding:.25rem 0;border-top:1px solid rgba(255,255,255,.05)">
+        &#x26A0; <b>V5.3.1</b> Output Encoding
+      </div>
+      <div style="font-size:.8rem;padding:.25rem 0;border-top:1px solid rgba(255,255,255,.05)">
+        &#x2705; <b>V8.3.1</b> Sensitive Data in HTTP
+      </div>
+      <div style="font-size:.8rem;padding:.25rem 0;border-top:1px solid rgba(255,255,255,.05)">
+        &#x2705; <b>V9.1.1</b> TLS for All Connections
+      </div>
+      <div style="font-size:.8rem;padding:.25rem 0;border-top:1px solid rgba(255,255,255,.05)">
+        &#x2705; <b>V10.3.1</b> No Sensitive Files Exposed
+      </div>
+      <div style="font-size:.8rem;padding:.25rem 0;border-top:1px solid rgba(255,255,255,.05)">
+        &#x2705; <b>V13.1.1</b> CSRF Protection
+      </div>
+      <div style="font-size:.8rem;padding:.25rem 0;border-top:1px solid rgba(255,255,255,.05)">
+        &#x274C; <b>V14.4.1</b> Security Headers
+      </div>
+      <div style="font-size:.8rem;padding:.25rem 0;border-top:1px solid rgba(255,255,255,.05)">
+        &#x2705; <b>V14.5.1</b> CORS Configuration
+      </div>
+      <div style="font-size:.8rem;padding:.25rem 0;border-top:1px solid rgba(255,255,255,.05)">
+        &#x2705; <b>V5.2.1</b> Input Validation
+      </div>
+      <div style="font-size:.8rem;padding:.25rem 0;border-top:1px solid rgba(255,255,255,.05)">
+        &#x2705; <b>V2.1.1</b> Credential Security
+      </div>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem">
+        <span style="font-size:1.8rem;font-weight:800;color:#4ade80">A</span>
+        <div>
+          <div style="font-weight:600;color:var(--text-primary)">PCI-DSS</div>
+          <div style="font-size:.8rem;color:var(--text-muted)">4.0</div>
+        </div>
+      </div>
+      <div style="background:var(--bg-card);border-radius:4px;height:8px;overflow:hidden;margin-bottom:.5rem">
+        <div style="width:100%;height:100%;background:#4ade80;border-radius:4px"></div>
+      </div>
+      <div style="font-size:.85rem;color:var(--text-muted)">5 pass / 0 fail</div>
+      <div style="font-size:.8rem;padding:.25rem 0;border-top:1px solid rgba(255,255,255,.05)">
+        &#x2705; <b>PCI-2.2.7</b> System Security Parameters
+      </div>
+      <div style="font-size:.8rem;padding:.25rem 0;border-top:1px solid rgba(255,255,255,.05)">
+        &#x2705; <b>PCI-4.2.1</b> Strong Cryptography for Transmission
+      </div>
+      <div style="font-size:.8rem;padding:.25rem 0;border-top:1px solid rgba(255,255,255,.05)">
+        &#x2705; <b>PCI-6.2.4</b> Common Software Attacks
+      </div>
+      <div style="font-size:.8rem;padding:.25rem 0;border-top:1px solid rgba(255,255,255,.05)">
+        &#x2705; <b>PCI-6.4.1</b> Public-Facing Web Applications
+      </div>
+      <div style="font-size:.8rem;padding:.25rem 0;border-top:1px solid rgba(255,255,255,.05)">
+        &#x2705; <b>PCI-6.5.1</b> Injection Flaws Prevention
+      </div>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem">
+        <span style="font-size:1.8rem;font-weight:800;color:#facc15">C</span>
+        <div>
+          <div style="font-weight:600;color:var(--text-primary)">GDPR</div>
+          <div style="font-size:.8rem;color:var(--text-muted)">Art. 32</div>
+        </div>
+      </div>
+      <div style="background:var(--bg-card);border-radius:4px;height:8px;overflow:hidden;margin-bottom:.5rem">
+        <div style="width:75%;height:100%;background:#facc15;border-radius:4px"></div>
+      </div>
+      <div style="font-size:.85rem;color:var(--text-muted)">3 pass / 1 fail</div>
+      <div style="font-size:.8rem;padding:.25rem 0;border-top:1px solid rgba(255,255,255,.05)">
+        &#x2705; <b>GDPR-32.1a</b> Encryption of Personal Data
+      </div>
+      <div style="font-size:.8rem;padding:.25rem 0;border-top:1px solid rgba(255,255,255,.05)">
+        &#x2705; <b>GDPR-32.1b</b> Confidentiality and Integrity
+      </div>
+      <div style="font-size:.8rem;padding:.25rem 0;border-top:1px solid rgba(255,255,255,.05)">
+        &#x274C; <b>GDPR-25.1</b> Data Protection by Design
+      </div>
+      <div style="font-size:.8rem;padding:.25rem 0;border-top:1px solid rgba(255,255,255,.05)">
+        &#x2705; <b>GDPR-32.1b-2</b> Access Control &amp; Data Exposure
+      </div>
+    </div>
+  </div>
+</section>
+<section id="remediation">
+  <h2 class="section-title"><span class="num">&#x1F6E0;</span> AI Remediation</h2>
+  <p class="section-desc">Suggerimenti AI per la correzione delle vulnerabilità trovate, con codice e passi specifici.</p>
+  <div style="margin-bottom:.5rem"><span class="badge badge-brand">3,657 tokens</span> <span class="badge" style="background:#334155;color:#94a3b8">4 fixes</span></div>
+  <details class="card" style="margin-bottom:.75rem;cursor:pointer">
+    <summary style="font-weight:600;color:var(--text-primary)">
+      subdomain_enum      <span class="badge" style="background:#f97316;color:#000;margin-left:.5rem">2hours</span>
+      <span class="badge" style="background:#1e293b;color:#fb923c;margin-left:.25rem;font-size:.65rem">A05:2021 Security Misconfiguration</span>
+      <span class="badge" style="background:#1e293b;color:#60a5fa;margin-left:.25rem;font-size:.65rem">CWE-200</span>
+    </summary>
+    <div style="padding:1rem 0 0">
+      <p style="color:var(--text-secondary);margin-bottom:1rem">Implement subdomain monitoring and access controls to reduce attack surface from discovered subdomains.</p>
+      <h4 style="color:var(--text-muted);font-size:.8rem;margin-bottom:.5rem">Steps</h4>
+      <ol style="margin:0 0 1rem 1.5rem;color:var(--text-primary)">
+        <li style="margin-bottom:.25rem">Audit all discovered subdomains to determine if they are necessary</li>
+        <li style="margin-bottom:.25rem">Remove or disable unused subdomains from DNS records</li>
+        <li style="margin-bottom:.25rem">Implement proper access controls and authentication for legitimate subdomains</li>
+        <li style="margin-bottom:.25rem">Set up continuous monitoring for new subdomain discoveries</li>
+        <li style="margin-bottom:.25rem">Configure proper SSL certificates for all active subdomains</li>
+        <li style="margin-bottom:.25rem">Implement rate limiting and DDoS protection for exposed subdomains</li>
+      </ol>
+      <div style="margin-bottom:.75rem">
+        <div style="font-size:.7rem;color:var(--text-muted);margin-bottom:.25rem">nginx — /etc/nginx/sites-available/subdomain-security</div>
+        <pre style="background:#0f172a;border:1px solid var(--border);border-radius:6px;padding:.75rem;font-size:.75rem;overflow-x:auto;color:#e2e8f0"><code># Block access to unused subdomains
+server {
+    listen 80;
+    listen 443 ssl;
+    server_name *.aziendaanonima.com;
+    
+    # Default deny all
+    return 444;
+}
+
+# Allow specific subdomains
+server {
+    listen 80;
+    listen 443 ssl;
+    server_name www.aziendaanonima.com aziendaanonima.com;
+    
+    # Your main site configuration
+    root /var/www/html;
+    index index.php index.html;
+}</code></pre>
+      </div>
+      <div style="margin-bottom:.75rem">
+        <div style="font-size:.7rem;color:var(--text-muted);margin-bottom:.25rem">bash — subdomain-monitor.sh</div>
+        <pre style="background:#0f172a;border:1px solid var(--border);border-radius:6px;padding:.75rem;font-size:.75rem;overflow-x:auto;color:#e2e8f0"><code>#!/bin/bash
+# Subdomain monitoring script
+DOMAIN=&quot;aziendaanonima.com&quot;
+LOGFILE=&quot;/var/log/subdomain-monitor.log&quot;
+
+# Check for new subdomains
+curl -s &quot;https://crt.sh/?q=%25.${DOMAIN}&amp;output=json&quot; | \
+jq -r &#x27;.[].name_value&#x27; | \
+sort -u &gt; /tmp/current_subdomains.txt
+
+# Compare with previous scan
+if [ -f /tmp/previous_subdomains.txt ]; then
+    NEW_SUBDOMAINS=$(comm -13 /tmp/previous_subdomains.txt /tmp/current_subdomains.txt)
+    if [ ! -z &quot;$NEW_SUBDOMAINS&quot; ]; then
+        echo &quot;$(date): New subdomains found: $NEW_SUBDOMAINS&quot; &gt;&gt; $LOGFILE
+    fi
+fi
+
+cp /tmp/current_subdomains.txt /tmp/previous_subdomains.txt</code></pre>
+      </div>
+      <div style="font-size:.7rem;color:var(--text-muted)">
+        <a href="https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/01-Information_Gathering/02-Fingerprint_Web_Server" target="_blank" style="color:var(--brand);display:block">https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/01-Information_Gathering/02-Fingerprint_Web_Server</a>
+        <a href="https://nginx.org/en/docs/http/server_names.html" target="_blank" style="color:var(--brand);display:block">https://nginx.org/en/docs/http/server_names.html</a>
+      </div>
+    </div>
+  </details>
+  <details class="card" style="margin-bottom:.75rem;cursor:pointer">
+    <summary style="font-weight:600;color:var(--text-primary)">
+      subdomain_enum      <span class="badge" style="background:#eab308;color:#000;margin-left:.5rem">30min</span>
+      <span class="badge" style="background:#1e293b;color:#fb923c;margin-left:.25rem;font-size:.65rem">A05:2021 Security Misconfiguration</span>
+      <span class="badge" style="background:#1e293b;color:#60a5fa;margin-left:.25rem;font-size:.65rem">CWE-200</span>
+    </summary>
+    <div style="padding:1rem 0 0">
+      <p style="color:var(--text-secondary);margin-bottom:1rem">Secure or disable the FTP subdomain showing a default page to prevent information disclosure.</p>
+      <h4 style="color:var(--text-muted);font-size:.8rem;margin-bottom:.5rem">Steps</h4>
+      <ol style="margin:0 0 1rem 1.5rem;color:var(--text-primary)">
+        <li style="margin-bottom:.25rem">Determine if ftp.aziendaanonima.com subdomain is necessary for business operations</li>
+        <li style="margin-bottom:.25rem">If not needed, remove the DNS A record for ftp.aziendaanonima.com</li>
+        <li style="margin-bottom:.25rem">If needed, implement proper authentication and remove default pages</li>
+        <li style="margin-bottom:.25rem">Configure proper error pages that don&#x27;t reveal server information</li>
+        <li style="margin-bottom:.25rem">Implement access restrictions based on IP whitelist if appropriate</li>
+      </ol>
+      <div style="margin-bottom:.75rem">
+        <div style="font-size:.7rem;color:var(--text-muted);margin-bottom:.25rem">nginx — /etc/nginx/sites-available/ftp-subdomain</div>
+        <pre style="background:#0f172a;border:1px solid var(--border);border-radius:6px;padding:.75rem;font-size:.75rem;overflow-x:auto;color:#e2e8f0"><code># Secure FTP subdomain configuration
+server {
+    listen 80;
+    listen 443 ssl;
+    server_name ftp.aziendaanonima.com;
+    
+    # Redirect HTTP to HTTPS
+    if ($scheme != &quot;https&quot;) {
+        return 301 https://$server_name$request_uri;
+    }
+    
+    # Basic authentication
+    auth_basic &quot;Restricted Access&quot;;
+    auth_basic_user_file /etc/nginx/.htpasswd;
+    
+    # Custom error pages
+    error_page 404 /custom_404.html;
+    error_page 403 /custom_403.html;
+    
+    location / {
+        # Your FTP web interface or deny all
+        deny all;
+    }
+}</code></pre>
+      </div>
+      <div style="margin-bottom:.75rem">
+        <div style="font-size:.7rem;color:var(--text-muted);margin-bottom:.25rem">bash — create-auth.sh</div>
+        <pre style="background:#0f172a;border:1px solid var(--border);border-radius:6px;padding:.75rem;font-size:.75rem;overflow-x:auto;color:#e2e8f0"><code>#!/bin/bash
+# Create basic auth for FTP subdomain
+sudo htpasswd -c /etc/nginx/.htpasswd ftpuser
+sudo chown www-data:www-data /etc/nginx/.htpasswd
+sudo chmod 640 /etc/nginx/.htpasswd</code></pre>
+      </div>
+      <div style="font-size:.7rem;color:var(--text-muted)">
+        <a href="https://nginx.org/en/docs/http/ngx_http_auth_basic_module.html" target="_blank" style="color:var(--brand);display:block">https://nginx.org/en/docs/http/ngx_http_auth_basic_module.html</a>
+        <a href="https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/01-Information_Gathering/08-Fingerprint_Web_Application_Framework" target="_blank" style="color:var(--brand);display:block">https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/01-Information_Gathering/08-Fingerprint_Web_Application_Framework</a>
+      </div>
+    </div>
+  </details>
+  <details class="card" style="margin-bottom:.75rem;cursor:pointer">
+    <summary style="font-weight:600;color:var(--text-primary)">
+      subdomain_enum      <span class="badge" style="background:#eab308;color:#000;margin-left:.5rem">30min</span>
+      <span class="badge" style="background:#1e293b;color:#fb923c;margin-left:.25rem;font-size:.65rem">A05:2021 Security Misconfiguration</span>
+      <span class="badge" style="background:#1e293b;color:#60a5fa;margin-left:.25rem;font-size:.65rem">CWE-200</span>
+    </summary>
+    <div style="padding:1rem 0 0">
+      <p style="color:var(--text-secondary);margin-bottom:1rem">Configure proper error handling for webmail subdomain to prevent information disclosure through 404 responses.</p>
+      <h4 style="color:var(--text-muted);font-size:.8rem;margin-bottom:.5rem">Steps</h4>
+      <ol style="margin:0 0 1rem 1.5rem;color:var(--text-primary)">
+        <li style="margin-bottom:.25rem">Evaluate if webmail.aziendaanonima.com is required for business operations</li>
+        <li style="margin-bottom:.25rem">If not needed, remove the DNS record or redirect to main domain</li>
+        <li style="margin-bottom:.25rem">If needed, implement proper webmail application with authentication</li>
+        <li style="margin-bottom:.25rem">Configure custom error pages that don&#x27;t reveal server information</li>
+        <li style="margin-bottom:.25rem">Implement rate limiting to prevent brute force attacks</li>
+      </ol>
+      <div style="margin-bottom:.75rem">
+        <div style="font-size:.7rem;color:var(--text-muted);margin-bottom:.25rem">nginx — /etc/nginx/sites-available/webmail-subdomain</div>
+        <pre style="background:#0f172a;border:1px solid var(--border);border-radius:6px;padding:.75rem;font-size:.75rem;overflow-x:auto;color:#e2e8f0"><code># Webmail subdomain configuration
+server {
+    listen 80;
+    listen 443 ssl;
+    server_name webmail.aziendaanonima.com;
+    
+    # Security headers
+    add_header X-Frame-Options DENY;
+    add_header X-Content-Type-Options nosniff;
+    add_header X-XSS-Protection &quot;1; mode=block&quot;;
+    
+    # Rate limiting
+    limit_req_zone $binary_remote_addr zone=webmail:10m rate=5r/m;
+    limit_req zone=webmail burst=10 nodelay;
+    
+    # Custom error pages
+    error_page 404 /custom_404.html;
+    error_page 500 502 503 504 /custom_50x.html;
+    
+    location / {
+        # If no webmail service, redirect to main site
+        return 301 https://aziendaanonima.com;
+        
+        # Or if webmail service exists:
+        # proxy_pass http://webmail_backend;
+        # proxy_set_header Host $host;
+    }
+}</code></pre>
+      </div>
+      <div style="margin-bottom:.75rem">
+        <div style="font-size:.7rem;color:var(--text-muted);margin-bottom:.25rem">html — /var/www/error-pages/custom_404.html</div>
+        <pre style="background:#0f172a;border:1px solid var(--border);border-radius:6px;padding:.75rem;font-size:.75rem;overflow-x:auto;color:#e2e8f0"><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Page Not Found&lt;/title&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Page Not Found&lt;/h1&gt;
+    &lt;p&gt;The requested page could not be found.&lt;/p&gt;
+    &lt;p&gt;&lt;a href=&quot;https://aziendaanonima.com&quot;&gt;Return to main site&lt;/a&gt;&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+      </div>
+      <div style="font-size:.7rem;color:var(--text-muted)">
+        <a href="https://nginx.org/en/docs/http/ngx_http_limit_req_module.html" target="_blank" style="color:var(--brand);display:block">https://nginx.org/en/docs/http/ngx_http_limit_req_module.html</a>
+        <a href="https://owasp.org/www-community/Improper_Error_Handling" target="_blank" style="color:var(--brand);display:block">https://owasp.org/www-community/Improper_Error_Handling</a>
+      </div>
+    </div>
+  </details>
+  <details class="card" style="margin-bottom:.75rem;cursor:pointer">
+    <summary style="font-weight:600;color:var(--text-primary)">
+      subdomain_enum      <span class="badge" style="background:#eab308;color:#000;margin-left:.5rem">30min</span>
+      <span class="badge" style="background:#1e293b;color:#fb923c;margin-left:.25rem;font-size:.65rem">A05:2021 Security Misconfiguration</span>
+      <span class="badge" style="background:#1e293b;color:#60a5fa;margin-left:.25rem;font-size:.65rem">CWE-200</span>
+    </summary>
+    <div style="padding:1rem 0 0">
+      <p style="color:var(--text-secondary);margin-bottom:1rem">Secure or remove the POP subdomain to eliminate unnecessary attack surface and information disclosure.</p>
+      <h4 style="color:var(--text-muted);font-size:.8rem;margin-bottom:.5rem">Steps</h4>
+      <ol style="margin:0 0 1rem 1.5rem;color:var(--text-primary)">
+        <li style="margin-bottom:.25rem">Assess if pop.aziendaanonima.com is required for email services</li>
+        <li style="margin-bottom:.25rem">If not needed, remove the DNS A record completely</li>
+        <li style="margin-bottom:.25rem">If needed for POP3/IMAP services, ensure it&#x27;s not accessible via HTTP/HTTPS</li>
+        <li style="margin-bottom:.25rem">Configure proper firewall rules to block HTTP access to mail servers</li>
+        <li style="margin-bottom:.25rem">Implement proper mail server security configurations</li>
+      </ol>
+      <div style="margin-bottom:.75rem">
+        <div style="font-size:.7rem;color:var(--text-muted);margin-bottom:.25rem">nginx — /etc/nginx/sites-available/pop-subdomain-block</div>
+        <pre style="background:#0f172a;border:1px solid var(--border);border-radius:6px;padding:.75rem;font-size:.75rem;overflow-x:auto;color:#e2e8f0"><code># Block HTTP access to POP subdomain
+server {
+    listen 80;
+    listen 443 ssl;
+    server_name pop.aziendaanonima.com;
+    
+    # Return 444 (connection closed without response)
+    return 444;
+}
+
+# Alternative: Redirect to main site
+# server {
+#     listen 80;
+#     listen 443 ssl;
+#     server_name pop.aziendaanonima.com;
+#     return 301 https://aziendaanonima.com;
+# }</code></pre>
+      </div>
+      <div style="margin-bottom:.75rem">
+        <div style="font-size:.7rem;color:var(--text-muted);margin-bottom:.25rem">bash — firewall-mail-ports.sh</div>
+        <pre style="background:#0f172a;border:1px solid var(--border);border-radius:6px;padding:.75rem;font-size:.75rem;overflow-x:auto;color:#e2e8f0"><code>#!/bin/bash
+# Configure firewall for mail server
+# Allow only mail ports, block HTTP/HTTPS for mail subdomain
+
+# Allow POP3 and IMAP ports from specific IPs only
+ufw allow from 10.0.1.0/24 to any port 110 comment &#x27;POP3&#x27;
+ufw allow from 10.0.1.0/24 to any port 995 comment &#x27;POP3S&#x27;
+ufw allow from 10.0.1.0/24 to any port 143 comment &#x27;IMAP&#x27;
+ufw allow from 10.0.1.0/24 to any port 993 comment &#x27;IMAPS&#x27;
+
+# Block HTTP/HTTPS for mail subdomain IP
+ufw deny from any to 10.0.0.20 port 80
+ufw deny from any to 10.0.0.20 port 443</code></pre>
+      </div>
+      <div style="font-size:.7rem;color:var(--text-muted)">
+        <a href="https://nginx.org/en/docs/http/request_processing.html" target="_blank" style="color:var(--brand);display:block">https://nginx.org/en/docs/http/request_processing.html</a>
+        <a href="https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/01-Test_Network_Infrastructure_Configuration" target="_blank" style="color:var(--brand);display:block">https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/01-Test_Network_Infrastructure_Configuration</a>
+      </div>
+    </div>
+  </details>
+</section>
+<section id="headers">
+  <h2 class="section-title"><span class="num">4</span> Analisi HTTP Headers</h2>
+  <p class="section-desc">Headers di sicurezza rilevati.</p>
+  <div class="card" style="overflow-x:auto"><table>
+    <thead><tr><th>Header</th><th>Valore</th><th>Status</th></tr></thead><tbody>
+    <tr><td><code>server</code></td><td><code>nginx</code></td><td><span class="badge badge-brand">Server</span></td></tr>
+    <tr><td><code>x-powered-by</code></td><td><code>PHP/7.3.20, PleskLin</code></td><td><span class="badge badge-brand">Server</span></td></tr>
+    <tr style="background:var(--critical-bg)"><td><code>strict-transport-security</code></td><td style="color:var(--critical)">ASSENTE</td><td><span class="badge badge-critical">Mancante</span></td></tr>
+    <tr style="background:var(--critical-bg)"><td><code>permissions-policy</code></td><td style="color:var(--critical)">ASSENTE</td><td><span class="badge badge-critical">Mancante</span></td></tr>
+    </tbody></table></div>
+</section>
+<section id="cookies">
+  <h2 class="section-title"><span class="num">5</span> Analisi Cookies</h2>
+  <div class="card"><p style="color:var(--text-secondary)">Nessun cookie rilevato.</p></div>
+</section>
+<section id="technologies">
+  <h2 class="section-title"><span class="num">6</span> Tecnologie Rilevate</h2>
+  <div class="grid-3">
+    <div class="card"><h3>Google Analytics</h3>
+      <div class="card-sm">Analytics</div>
+      <span class="badge badge-brand">high</span></div>
+    <div class="card"><h3>Segment</h3>
+      <div class="card-sm">Analytics</div>
+      <span class="badge badge-brand">high</span></div>
+    <div class="card"><h3>Ghost</h3>
+      <div class="card-sm">CMS</div>
+      <span class="badge badge-brand">high</span></div>
+    <div class="card"><h3>WordPress</h3>
+      <div class="card-sm">CMS</div>
+      <span class="badge badge-brand">high</span></div>
+    <div class="card"><h3>WooCommerce</h3>
+      <div class="card-sm">E-commerce</div>
+      <span class="badge badge-brand">high</span></div>
+    <div class="card"><h3>Google Fonts</h3>
+      <div class="card-sm">Font Service</div>
+      <span class="badge badge-brand">high</span></div>
+    <div class="card"><h3>Font Awesome</h3>
+      <div class="card-sm">Icon Library</div>
+      <span class="badge badge-brand">high</span></div>
+    <div class="card"><h3>PHP 7.3.20</h3>
+      <div class="card-sm">Language</div>
+      <span class="badge badge-brand">high</span></div>
+    <div class="card"><h3>reCAPTCHA</h3>
+      <div class="card-sm">Security</div>
+      <span class="badge badge-brand">high</span></div>
+    <div class="card"><h3>Nginx</h3>
+      <div class="card-sm">Web Server</div>
+      <span class="badge badge-brand">high</span></div>
+  </div>
+</section>
+<section id="sitemap">
+  <h2 class="section-title"><span class="num">7</span> Sitemap</h2>
+  <div class="card" style="overflow-x:auto"><table>
+    <thead><tr><th>URL</th><th>Depth</th><th>Target</th></tr></thead><tbody>
+    <tr><td style="max-width:500px;word-break:break-all"><a href="https://aziendaanonima.com" target="_blank" rel="noopener"><code>https://aziendaanonima.com</code></a></td>
+        <td>0</td><td>aziendaanonima.com</td></tr>
+    <tr><td style="max-width:500px;word-break:break-all"><a href="https://www.aziendaanonima.com/en/" target="_blank" rel="noopener"><code>https://www.aziendaanonima.com/en/</code></a></td>
+        <td>0</td><td>aziendaanonima.com</td></tr>
+    <tr><td style="max-width:500px;word-break:break-all"><a href="https://www.aziendaanonima.com/en/main-customers/" target="_blank" rel="noopener"><code>https://www.aziendaanonima.com/en/main-customers/</code></a></td>
+        <td>0</td><td>aziendaanonima.com</td></tr>
+    <tr><td style="max-width:500px;word-break:break-all"><a href="https://www.aziendaanonima.com/en/quality/" target="_blank" rel="noopener"><code>https://www.aziendaanonima.com/en/quality/</code></a></td>
+        <td>0</td><td>aziendaanonima.com</td></tr>
+    <tr><td style="max-width:500px;word-break:break-all"><a href="https://www.aziendaanonima.com/en/milling-machines-softwares/" target="_blank" rel="noopener"><code>https://www.aziendaanonima.com/en/milling-machines-softwares/</code></a></td>
+        <td>0</td><td>aziendaanonima.com</td></tr>
+    <tr><td style="max-width:500px;word-break:break-all"><a href="https://www.aziendaanonima.com/en/foundry-toolings/loast-foam-polycast/" target="_blank" rel="noopener"><code>https://www.aziendaanonima.com/en/foundry-toolings/loast-foam-polycast/</code></a></td>
+        <td>0</td><td>aziendaanonima.com</td></tr>
+    <tr><td style="max-width:500px;word-break:break-all"><a href="https://www.aziendaanonima.com/en/foundry-toolings/hydroforming/" target="_blank" rel="noopener"><code>https://www.aziendaanonima.com/en/foundry-toolings/hydroforming/</code></a></td>
+        <td>0</td><td>aziendaanonima.com</td></tr>
+    <tr><td style="max-width:500px;word-break:break-all"><a href="https://www.aziendaanonima.com/en/foundry-toolings/mass-production/" target="_blank" rel="noopener"><code>https://www.aziendaanonima.com/en/foundry-toolings/mass-production/</code></a></td>
+        <td>0</td><td>aziendaanonima.com</td></tr>
+    <tr><td style="max-width:500px;word-break:break-all"><a href="https://www.aziendaanonima.com/en/machinings/" target="_blank" rel="noopener"><code>https://www.aziendaanonima.com/en/machinings/</code></a></td>
+        <td>0</td><td>aziendaanonima.com</td></tr>
+    <tr><td style="max-width:500px;word-break:break-all"><a href="https://www.aziendaanonima.com/en/foundry-toolings/" target="_blank" rel="noopener"><code>https://www.aziendaanonima.com/en/foundry-toolings/</code></a></td>
+        <td>0</td><td>aziendaanonima.com</td></tr>
+    <tr><td style="max-width:500px;word-break:break-all"><a href="https://www.aziendaanonima.com/en/machinings/prototypes-from-casting/" target="_blank" rel="noopener"><code>https://www.aziendaanonima.com/en/machinings/prototypes-from-casting/</code></a></td>
+        <td>0</td><td>aziendaanonima.com</td></tr>
+    <tr><td style="max-width:500px;word-break:break-all"><a href="https://www.aziendaanonima.com/en/foundry-toolings/prototypes/" target="_blank" rel="noopener"><code>https://www.aziendaanonima.com/en/foundry-toolings/prototypes/</code></a></td>
+        <td>0</td><td>aziendaanonima.com</td></tr>
+    <tr><td style="max-width:500px;word-break:break-all"><a href="https://www.aziendaanonima.com/en/rapid-prototyping/" target="_blank" rel="noopener"><code>https://www.aziendaanonima.com/en/rapid-prototyping/</code></a></td>
+        <td>0</td><td>aziendaanonima.com</td></tr>
+    <tr><td style="max-width:500px;word-break:break-all"><a href="https://www.aziendaanonima.com/en/machinings/mas-production/" target="_blank" rel="noopener"><code>https://www.aziendaanonima.com/en/machinings/mas-production/</code></a></td>
+        <td>0</td><td>aziendaanonima.com</td></tr>
+    <tr><td style="max-width:500px;word-break:break-all"><a href="https://www.aziendaanonima.com/en/machinings/machined-from-solid/" target="_blank" rel="noopener"><code>https://www.aziendaanonima.com/en/machinings/machined-from-solid/</code></a></td>
+        <td>0</td><td>aziendaanonima.com</td></tr>
+    <tr><td style="max-width:500px;word-break:break-all"><a href="https://www.aziendaanonima.com/en/foundry-toolings/prototypes/sand-casting/" target="_blank" rel="noopener"><code>https://www.aziendaanonima.com/en/foundry-toolings/prototypes/sand-casting/</code></a></td>
+        <td>0</td><td>aziendaanonima.com</td></tr>
+    <tr><td style="max-width:500px;word-break:break-all"><a href="https://www.aziendaanonima.com/en/foundry-toolings/mass-production/core-boxes/" target="_blank" rel="noopener"><code>https://www.aziendaanonima.com/en/foundry-toolings/mass-production/core-boxes/</code></a></td>
+        <td>0</td><td>aziendaanonima.com</td></tr>
+    </tbody></table></div>
+</section>
+<section id="site-tree">
+  <h2 class="section-title"><span class="num">&#x1F5FA;</span> Architettura del Sito</h2>
+  <p class="section-desc">Struttura gerarchica delle pagine scoperte. Clicca sui nodi per espandere/comprimere i rami. I nodi foglia sono link cliccabili.</p>
+  <div class="card" style="padding:0;overflow:hidden;position:relative;min-height:400px">
+    <div style="display:flex;align-items:center;gap:1.5rem;padding:.75rem 1.5rem;border-bottom:1px solid var(--border);background:var(--bg-secondary)">
+      <span style="display:flex;align-items:center;gap:.4rem;font-size:.75rem;color:var(--text-secondary)"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="var(--brand)"/></svg> Analizzata</span>
+      <span style="display:flex;align-items:center;gap:.4rem;font-size:.75rem;color:var(--text-secondary)"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="var(--info)"/></svg> Scoperta</span>
+      <span style="display:flex;align-items:center;gap:.4rem;font-size:.75rem;color:var(--text-secondary)"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="var(--text-muted)"/></svg> Nodo strutturale</span>
+      <span style="display:flex;align-items:center;gap:.4rem;font-size:.75rem;color:var(--text-secondary)"><svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="var(--critical)"/></svg> Grade F</span>
+    </div>
+    <div id="site-tree-chart" style="width:100%;overflow:auto;background:var(--bg-primary)"></div>
+  </div>
+<script>
+(function(){
+  const treeData = {"name": "Sites", "children": [{"name": "aziendaanonima.com", "children": [], "url": "https://aziendaanonima.com", "_grade": "F", "_analyzed": true}, {"name": "www.aziendaanonima.com", "children": [{"name": "en", "children": [{"name": "rapid-prototyping", "children": [], "url": "https://www.aziendaanonima.com/en/rapid-prototyping/", "_grade": "F", "_analyzed": true}, {"name": "foundry-toolings", "children": [{"name": "prototypes", "children": [{"name": "sand-casting", "children": [], "url": "https://www.aziendaanonima.com/en/foundry-toolings/prototypes/sand-casting/", "_grade": "?", "_analyzed": false}], "url": "https://www.aziendaanonima.com/en/foundry-toolings/prototypes/", "_grade": "F", "_analyzed": true}, {"name": "loast-foam-polycast", "children": [], "url": "https://www.aziendaanonima.com/en/foundry-toolings/loast-foam-polycast/", "_grade": "F", "_analyzed": true}, {"name": "hydroforming", "children": [], "url": "https://www.aziendaanonima.com/en/foundry-toolings/hydroforming/", "_grade": "F", "_analyzed": true}, {"name": "mass-production", "children": [{"name": "core-boxes", "children": [], "url": "https://www.aziendaanonima.com/en/foundry-toolings/mass-production/core-boxes/", "_grade": "?", "_analyzed": false}], "url": "https://www.aziendaanonima.com/en/foundry-toolings/mass-production/", "_grade": "F", "_analyzed": true}], "url": "https://www.aziendaanonima.com/en/foundry-toolings/", "_grade": "F", "_analyzed": true}, {"name": "machinings", "children": [{"name": "prototypes-from-casting", "children": [], "url": "https://www.aziendaanonima.com/en/machinings/prototypes-from-casting/", "_grade": "F", "_analyzed": true}, {"name": "mas-production", "children": [], "url": "https://www.aziendaanonima.com/en/machinings/mas-production/", "_grade": "F", "_analyzed": true}, {"name": "machined-from-solid", "children": [], "url": "https://www.aziendaanonima.com/en/machinings/machined-from-solid/", "_grade": "F", "_analyzed": true}], "url": "https://www.aziendaanonima.com/en/machinings/", "_grade": "F", "_analyzed": true}, {"name": "main-customers", "children": [], "url": "https://www.aziendaanonima.com/en/main-customers/", "_grade": "F", "_analyzed": true}, {"name": "quality", "children": [], "url": "https://www.aziendaanonima.com/en/quality/", "_grade": "F", "_analyzed": true}, {"name": "milling-machines-softwares", "children": [], "url": "https://www.aziendaanonima.com/en/milling-machines-softwares/", "_grade": "F", "_analyzed": true}], "url": "https://www.aziendaanonima.com/en/", "_grade": "F", "_analyzed": true}], "url": "", "_grade": "?", "_analyzed": false}], "url": "", "_grade": "?", "_analyzed": false};
+
+  const container = document.getElementById("site-tree-chart");
+  if (!container || typeof d3 === "undefined") return;
+
+  // Read CSS custom properties at runtime for theme awareness
+  function css(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+
+  const margin = {top: 30, right: 200, bottom: 30, left: 60};
+
+  // Count total leaf nodes to calculate height
+  function countLeaves(node) {
+    if (!node.children || node.children.length === 0) return 1;
+    return node.children.reduce((sum, c) => sum + countLeaves(c), 0);
+  }
+  const totalLeaves = countLeaves(treeData);
+  const dynamicHeight = Math.max(500, totalLeaves * 32);
+  const width = Math.max(900, container.offsetWidth || 900);
+  const height = dynamicHeight;
+
+  const svg = d3.select(container)
+    .append("svg")
+    .attr("width", width)
+    .attr("height", height)
+    .attr("viewBox", `0 0 ${width} ${height}`)
+    .style("font-family", "'Inter', sans-serif");
+
+  const g = svg.append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  const treeLayout = d3.tree()
+    .size([height - margin.top - margin.bottom, width - margin.left - margin.right - 40]);
+
+  const root = d3.hierarchy(treeData);
+
+  // Collapse deep nodes by default (depth > 2)
+  root.descendants().forEach(d => {
+    if (d.depth > 2 && d.children) {
+      d._children = d.children;
+      d.children = null;
+    }
+  });
+
+  function nodeColor(d) {
+    const data = d.data;
+    if (data._analyzed && data._grade === "F") return css("--critical");
+    if (data._analyzed) return css("--brand");
+    if (data.url) return css("--info");
+    return css("--text-muted");
+  }
+
+  function gradeColor(grade) {
+    if (grade === "F") return css("--critical");
+    if (grade === "C") return css("--medium");
+    return css("--brand");
+  }
+
+  function update(source) {
+    const duration = 400;
+    const tree = treeLayout(root);
+    const nodes = root.descendants();
+    const links = root.links();
+
+    // Links
+    const link = g.selectAll("path.tree-link").data(links, d => d.target.data.name + d.target.depth);
+
+    const linkEnter = link.enter().append("path")
+      .attr("class", "tree-link")
+      .attr("fill", "none")
+      .attr("stroke", css("--border"))
+      .attr("stroke-width", 1.2)
+      .attr("stroke-opacity", 0.6)
+      .attr("d", d3.linkHorizontal().x(d => source.y0 || 0).y(d => source.x0 || 0));
+
+    link.merge(linkEnter).transition().duration(duration)
+      .attr("d", d3.linkHorizontal().x(d => d.y).y(d => d.x));
+
+    link.exit().transition().duration(duration)
+      .attr("d", d3.linkHorizontal().x(d => source.y).y(d => source.x))
+      .remove();
+
+    // Nodes
+    const node = g.selectAll("g.tree-node").data(nodes, d => d.data.name + d.depth);
+
+    // Toggle expand/collapse helper
+    function toggleNode(d) {
+      if (d.children) {
+        d._children = d.children;
+        d.children = null;
+      } else if (d._children) {
+        d.children = d._children;
+        d._children = null;
+      }
+      update(d);
+    }
+
+    const nodeEnter = node.enter().append("g")
+      .attr("class", "tree-node")
+      .attr("transform", `translate(${source.y0 || 0},${source.x0 || 0})`);
+
+    // Node glow — click toggles expand/collapse
+    nodeEnter.append("circle")
+      .attr("r", 10)
+      .attr("fill", d => nodeColor(d))
+      .attr("opacity", 0.15)
+      .attr("cursor", d => (d.children || d._children) ? "pointer" : "default")
+      .on("click", (event, d) => { event.stopPropagation(); if (d.children || d._children) toggleNode(d); });
+
+    // Node circle — click toggles expand/collapse
+    nodeEnter.append("circle")
+      .attr("class", "node-dot")
+      .attr("r", d => d.children || d._children ? 6 : 4.5)
+      .attr("fill", d => nodeColor(d))
+      .attr("stroke", css("--bg-primary"))
+      .attr("stroke-width", 2)
+      .attr("cursor", d => (d.children || d._children) ? "pointer" : "default")
+      .on("click", (event, d) => { event.stopPropagation(); if (d.children || d._children) toggleNode(d); });
+
+    // Collapse indicator
+    nodeEnter.append("text")
+      .attr("class", "collapse-ind")
+      .attr("x", 0)
+      .attr("y", 1)
+      .attr("text-anchor", "middle")
+      .attr("fill", css("--bg-primary"))
+      .attr("font-size", "8px")
+      .attr("font-weight", "700")
+      .attr("pointer-events", "none")
+      .text(d => d._children ? "+" : "");
+
+    // Label — leaf nodes with URL open link, parent nodes expand/collapse
+    function isLeaf(d) { return !d.children && !d._children; }
+    nodeEnter.append("text")
+      .attr("class", "node-label")
+      .attr("dy", ".35em")
+      .attr("x", d => (d.children || d._children) ? -12 : 10)
+      .attr("text-anchor", d => (d.children || d._children) ? "end" : "start")
+      .attr("fill", d => d.data.url ? css("--text-primary") : css("--text-secondary"))
+      .attr("font-size", d => d.depth === 0 ? "13px" : "11px")
+      .attr("font-weight", d => d.depth === 0 ? "700" : (d.data._analyzed ? "600" : "400"))
+      .attr("font-family", d => d.data.url ? "'JetBrains Mono', monospace" : "'Inter', sans-serif")
+      .attr("cursor", d => (isLeaf(d) && d.data.url) ? "pointer" : ((d.children || d._children) ? "pointer" : "default"))
+      .attr("text-decoration", d => (isLeaf(d) && d.data.url) ? "underline" : "none")
+      .attr("opacity", d => d.data.url ? 1 : 0.8)
+      .on("click", (event, d) => {
+        event.stopPropagation();
+        if (isLeaf(d) && d.data.url) {
+          window.open(d.data.url, "_blank", "noopener");
+        } else if (d.children || d._children) {
+          toggleNode(d);
+        }
+      })
+      .text(d => {
+        let name = d.data.name;
+        if (name.length > 40) name = name.substring(0, 37) + "...";
+        return name;
+      })
+      .append("title")
+      .text(d => d.data.url || d.data.name);
+
+    // Grade badge for analyzed nodes
+    nodeEnter.filter(d => d.data._analyzed && d.data._grade && d.data._grade !== "?")
+      .append("text")
+      .attr("class", "grade-badge")
+      .attr("dy", ".35em")
+      .attr("x", d => {
+        const labelLen = Math.min(d.data.name.length, 40) * 6.5;
+        return (d.children || d._children) ? -(labelLen + 18) : (labelLen + 16);
+      })
+      .attr("text-anchor", "start")
+      .attr("fill", d => gradeColor(d.data._grade))
+      .attr("font-size", "9px")
+      .attr("font-weight", "700")
+      .attr("font-family", "'JetBrains Mono', monospace")
+      .text(d => d.data._grade);
+
+    // Transition existing + entering nodes
+    const nodeUpdate = node.merge(nodeEnter);
+    nodeUpdate.transition().duration(duration)
+      .attr("transform", d => `translate(${d.y},${d.x})`);
+
+    // Update collapse indicator on existing nodes
+    nodeUpdate.select("text.collapse-ind")
+      .text(d => d._children ? "+" : "");
+
+    // Remove exiting nodes
+    node.exit().transition().duration(duration)
+      .attr("transform", `translate(${source.y},${source.x})`)
+      .remove();
+
+    // Save positions for next transition
+    nodes.forEach(d => { d.x0 = d.x; d.y0 = d.y; });
+  }
+
+  root.x0 = height / 2;
+  root.y0 = 0;
+  update(root);
+
+  // Expose updateTreeColors for theme toggle
+  window.updateTreeColors = function() {
+    // Update all link strokes
+    g.selectAll("path.tree-link").attr("stroke", css("--border"));
+    // Update node circles
+    g.selectAll("g.tree-node").each(function(d) {
+      const sel = d3.select(this);
+      const c = nodeColor(d);
+      sel.selectAll("circle").filter(function(_, i) { return i === 0; }).attr("fill", c);
+      sel.select("circle.node-dot").attr("fill", c).attr("stroke", css("--bg-primary"));
+      sel.select("text.collapse-ind").attr("fill", css("--bg-primary"));
+      sel.select("text.node-label").attr("fill", d.data.url ? css("--text-primary") : css("--text-secondary"));
+      sel.select("text.grade-badge").attr("fill", gradeColor(d.data._grade || ""));
+    });
+  };
+
+})();
+</script>
+</section>
+<section id="recommendations">
+  <h2 class="section-title"><span class="num">9</span> Raccomandazioni</h2>
+  <div class="finding info">
+    <div class="finding-title">1. Add &#x27;Strict-Transport-Security: max-age=31536000; includeSubDomains&#x27;</div>
+    <div class="finding-text">Applicabile a 16 pagina/e.</div>
+  </div>
+  <div class="finding info">
+    <div class="finding-title">2. Add a Content-Security-Policy header with appropriate directives</div>
+    <div class="finding-text">Applicabile a 16 pagina/e.</div>
+  </div>
+  <div class="finding info">
+    <div class="finding-title">3. Add &#x27;X-Content-Type-Options: nosniff&#x27;</div>
+    <div class="finding-text">Applicabile a 16 pagina/e.</div>
+  </div>
+  <div class="finding info">
+    <div class="finding-title">4. Add &#x27;X-Frame-Options: DENY&#x27; or &#x27;SAMEORIGIN&#x27;</div>
+    <div class="finding-text">Applicabile a 16 pagina/e.</div>
+  </div>
+  <div class="finding info">
+    <div class="finding-title">5. Add &#x27;X-XSS-Protection: 1; mode=block&#x27;</div>
+    <div class="finding-text">Applicabile a 16 pagina/e.</div>
+  </div>
+  <div class="finding info">
+    <div class="finding-title">6. Add &#x27;Referrer-Policy: strict-origin-when-cross-origin&#x27;</div>
+    <div class="finding-text">Applicabile a 16 pagina/e.</div>
+  </div>
+  <div class="finding info">
+    <div class="finding-title">7. Add Permissions-Policy to disable unused browser features (camera, microphone, etc.)</div>
+    <div class="finding-text">Applicabile a 16 pagina/e.</div>
+  </div>
+  <div class="finding info">
+    <div class="finding-title">8. Remove X-Powered-By header to reduce fingerprinting</div>
+    <div class="finding-text">Applicabile a 16 pagina/e.</div>
+  </div>
+</section>
+<section id="legend" style="margin-top:3rem;padding-top:2rem;border-top:1px solid var(--border)">
+  <h2 class="section-title"><span class="num">&#x1F4D6;</span> Legenda</h2>
+  <p class="section-desc">Spiegazione delle scale di valutazione utilizzate in questo report.</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem">
+    <div class="card">
+      <h3 style="margin-bottom:.5rem;color:var(--text-primary)">Security Grade</h3>
+      <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:.75rem">Valutazione complessiva della postura di sicurezza basata sull'analisi degli header HTTP.</p>
+      <div style="display:flex;align-items:baseline;gap:.5rem;padding:.25rem 0;font-size:.8rem">
+        <span style="color:var(--brand);font-weight:700;min-width:1.5rem">A+</span>
+        <span style="color:var(--text-secondary)">Eccellente — tutti gli header di sicurezza critici sono correttamente configurati.</span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:.5rem;padding:.25rem 0;font-size:.8rem">
+        <span style="color:#4ade80;font-weight:700;min-width:1.5rem">A</span>
+        <span style="color:var(--text-secondary)">Molto buono — la maggior parte degli header di sicurezza presenti con lacune minori.</span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:.5rem;padding:.25rem 0;font-size:.8rem">
+        <span style="color:#a3e635;font-weight:700;min-width:1.5rem">B</span>
+        <span style="color:var(--text-secondary)">Buono — alcuni header importanti mancanti.</span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:.5rem;padding:.25rem 0;font-size:.8rem">
+        <span style="color:#facc15;font-weight:700;min-width:1.5rem">C</span>
+        <span style="color:var(--text-secondary)">Discreto — diversi header di sicurezza mancanti o mal configurati.</span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:.5rem;padding:.25rem 0;font-size:.8rem">
+        <span style="color:#fb923c;font-weight:700;min-width:1.5rem">D</span>
+        <span style="color:var(--text-secondary)">Scarso — la maggior parte degli header di sicurezza mancanti.</span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:.5rem;padding:.25rem 0;font-size:.8rem">
+        <span style="color:#f87171;font-weight:700;min-width:1.5rem">F</span>
+        <span style="color:var(--text-secondary)">Critico — pochi o nessun header di sicurezza rilevato.</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:.5rem;color:var(--text-primary)">Compliance</h3>
+      <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:.75rem">Aderenza ai framework di sicurezza (OWASP ASVS, PCI DSS, GDPR).</p>
+      <div style="display:flex;align-items:baseline;gap:.5rem;padding:.25rem 0;font-size:.8rem">
+        <span style="color:#4ade80;font-weight:700;min-width:1.5rem">A</span>
+        <span style="color:var(--text-secondary)">Eccellente — tutti i requisiti testati soddisfatti.</span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:.5rem;padding:.25rem 0;font-size:.8rem">
+        <span style="color:#a3e635;font-weight:700;min-width:1.5rem">B</span>
+        <span style="color:var(--text-secondary)">Buono — la maggior parte dei requisiti soddisfatti.</span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:.5rem;padding:.25rem 0;font-size:.8rem">
+        <span style="color:#facc15;font-weight:700;min-width:1.5rem">C</span>
+        <span style="color:var(--text-secondary)">Discreto — conformità parziale, miglioramenti necessari.</span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:.5rem;padding:.25rem 0;font-size:.8rem">
+        <span style="color:#fb923c;font-weight:700;min-width:1.5rem">D</span>
+        <span style="color:var(--text-secondary)">Scarso — significativa non conformità.</span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:.5rem;padding:.25rem 0;font-size:.8rem">
+        <span style="color:#f87171;font-weight:700;min-width:1.5rem">F</span>
+        <span style="color:var(--text-secondary)">Insufficiente — requisiti critici non soddisfatti.</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:.5rem;color:var(--text-primary)">DNS Security</h3>
+      <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:.75rem">Sicurezza della configurazione DNS inclusa l'autenticazione email (SPF, DMARC, DKIM) e DNSSEC.</p>
+      <div style="display:flex;align-items:baseline;gap:.5rem;padding:.25rem 0;font-size:.8rem">
+        <span style="color:#4ade80;font-weight:700;min-width:1.5rem">A</span>
+        <span style="color:var(--text-secondary)">Eccellente — tutti i controlli di sicurezza DNS presenti.</span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:.5rem;padding:.25rem 0;font-size:.8rem">
+        <span style="color:#a3e635;font-weight:700;min-width:1.5rem">B</span>
+        <span style="color:var(--text-secondary)">Buono — la maggior parte dei controlli presenti.</span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:.5rem;padding:.25rem 0;font-size:.8rem">
+        <span style="color:#facc15;font-weight:700;min-width:1.5rem">C</span>
+        <span style="color:var(--text-secondary)">Discreto — alcuni controlli mancanti.</span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:.5rem;padding:.25rem 0;font-size:.8rem">
+        <span style="color:#fb923c;font-weight:700;min-width:1.5rem">D</span>
+        <span style="color:var(--text-secondary)">Scarso — controlli importanti assenti.</span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:.5rem;padding:.25rem 0;font-size:.8rem">
+        <span style="color:#f87171;font-weight:700;min-width:1.5rem">F</span>
+        <span style="color:var(--text-secondary)">Insufficiente — sicurezza DNS gravemente carente.</span>
+      </div>
+    </div>
+  </div>
+</section>
+<section id="waf-detection">
+  <h2 class="section-title"><span class="num">&#x1F6E1;</span> WAF Detection</h2>
+  <p class="section-desc">No WAF detected. The target appears to be directly exposed without a web application firewall.</p>
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem">
+      <div style="font-size:1.3rem;font-weight:700;color:var(--text-muted)">None Detected</div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:.8rem;margin-top:.5rem">
+      <thead><tr style="border-bottom:1px solid var(--border)">
+        <th style="text-align:left;padding:.4rem .5rem;color:var(--text-muted);font-weight:500">Probe</th>
+        <th style="text-align:left;padding:.4rem .5rem;color:var(--text-muted);font-weight:500">HTTP Status</th>
+        <th style="text-align:left;padding:.4rem .5rem;color:var(--text-muted);font-weight:500">Server</th>
+        <th style="text-align:left;padding:.4rem .5rem;color:var(--text-muted);font-weight:500">Blocked</th>
+      </tr></thead><tbody>
+      <tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:.4rem .5rem">GET / (normal)</td>
+        <td style="padding:.4rem .5rem;color:var(--text-primary);font-family:monospace">301</td>
+        <td style="padding:.4rem .5rem;font-family:monospace">nginx</td>
+        <td style="padding:.4rem .5rem">-</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:.4rem .5rem">GET /nonexistent (404)</td>
+        <td style="padding:.4rem .5rem;color:var(--text-primary);font-family:monospace">301</td>
+        <td style="padding:.4rem .5rem;font-family:monospace">nginx</td>
+        <td style="padding:.4rem .5rem">-</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:.4rem .5rem">GET /?id=sqli (WAF trigger)</td>
+        <td style="padding:.4rem .5rem;color:var(--text-primary);font-family:monospace">301</td>
+        <td style="padding:.4rem .5rem;font-family:monospace">nginx</td>
+        <td style="padding:.4rem .5rem">&#x2705; No</td>
+      </tr>
+    </tbody></table>
+  </div>
+</section>
+<section id="network-services">
+  <h2 class="section-title"><span class="num">&#x1F310;</span> Network Services &amp; Infrastructure</h2>
+  <p class="section-desc">Comprehensive analysis of network services, open ports, and non-web infrastructure across all scanned targets.</p>
+  <div class="card" style="margin-bottom:1rem">
+    <div style="display:flex;flex-wrap:wrap;gap:2rem;margin-bottom:.5rem">
+      <div style="text-align:center"><div style="font-size:1.8rem;font-weight:700;color:var(--brand)">2</div><div style="font-size:.75rem;color:var(--text-muted)">Targets Scanned</div></div>
+      <div style="text-align:center"><div style="font-size:1.8rem;font-weight:700;color:var(--brand)">4</div><div style="font-size:.75rem;color:var(--text-muted)">Open Ports</div></div>
+      <div style="text-align:center"><div style="font-size:1.8rem;font-weight:700;color:var(--brand)">3</div><div style="font-size:.75rem;color:var(--text-muted)">HTTP Services</div></div>
+      <div style="text-align:center"><div style="font-size:1.8rem;font-weight:700;color:var(--brand)">0</div><div style="font-size:.75rem;color:var(--text-muted)">WAF Protected</div></div>
+      <div style="text-align:center"><div style="font-size:1.8rem;font-weight:700;color:var(--brand)">3</div><div style="font-size:.75rem;color:var(--text-muted)">Service Types</div></div>
+    </div>
+    <div style="font-size:.8rem;color:var(--text-secondary);margin-top:.5rem">
+      <strong>Detected services:</strong> ftp, http, https-alt
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:1rem">
+    <h3 style="color:var(--text-primary);margin-bottom:.75rem;font-size:1rem">aziendaanonima.com <span style="font-size:.75rem;color:var(--text-muted);font-weight:400">(primary target)</span></h3>
+    <div style="display:flex;flex-wrap:wrap;gap:1.5rem;margin-bottom:1rem;padding-bottom:.75rem;border-bottom:1px solid var(--border)">
+      <div><span style="color:var(--text-muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em">Status</span><br>
+        <span style="color:#6bef1a;font-weight:600;font-size:.9rem">&#x25CF; Online</span></div>
+      <div><span style="color:var(--text-muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em">Resolved IP</span><br>
+        <code style="font-size:.85rem">10.0.0.10</code></div>
+      <div><span style="color:var(--text-muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em">WAF</span><br>
+        <span style="font-size:.9rem;color:var(--text-muted)">None</span></div>
+      <div><span style="color:var(--text-muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em">Reverse DNS</span><br>
+        <code style="font-size:.85rem">server01.hostprovider.net</code></div>
+      <div><span style="color:var(--text-muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em">Open Ports</span><br>
+        <strong style="font-size:.9rem">4</strong></div>
+    </div>
+    <div style="margin-bottom:1rem">
+      <div style="font-size:.8rem;font-weight:600;color:var(--text-secondary);margin-bottom:.5rem">Open Ports &amp; Services</div>
+      <table style="width:100%;border-collapse:collapse;font-size:.8rem">
+        <thead><tr style="border-bottom:1px solid var(--border)">
+          <th style="text-align:left;padding:.35rem .5rem;color:var(--text-muted);font-weight:500">Port</th>
+          <th style="text-align:left;padding:.35rem .5rem;color:var(--text-muted);font-weight:500">State</th>
+          <th style="text-align:left;padding:.35rem .5rem;color:var(--text-muted);font-weight:500">Protocol</th>
+          <th style="text-align:left;padding:.35rem .5rem;color:var(--text-muted);font-weight:500">Service</th>
+          <th style="text-align:left;padding:.35rem .5rem;color:var(--text-muted);font-weight:500">Banner / Details</th>
+        </tr></thead><tbody>
+        <tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:.35rem .5rem;font-family:monospace;font-weight:600">21</td>
+          <td style="padding:.35rem .5rem;color:#6bef1a">open</td>
+          <td style="padding:.35rem .5rem">TCP</td>
+          <td style="padding:.35rem .5rem">&#x2699; ftp</td>
+          <td style="padding:.35rem .5rem;font-family:monospace;font-size:.75rem">ProFTPD</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:.35rem .5rem;font-family:monospace;font-weight:600">80</td>
+          <td style="padding:.35rem .5rem;color:#6bef1a">open</td>
+          <td style="padding:.35rem .5rem">TCP</td>
+          <td style="padding:.35rem .5rem">&#x1F310; http</td>
+          <td style="padding:.35rem .5rem;font-family:monospace;font-size:.75rem">nginx</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:.35rem .5rem;font-family:monospace;font-weight:600">443</td>
+          <td style="padding:.35rem .5rem;color:#6bef1a">open</td>
+          <td style="padding:.35rem .5rem">TCP</td>
+          <td style="padding:.35rem .5rem">&#x1F310; http</td>
+          <td style="padding:.35rem .5rem;font-family:monospace;font-size:.75rem">nginx</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:.35rem .5rem;font-family:monospace;font-weight:600">8443</td>
+          <td style="padding:.35rem .5rem;color:#6bef1a">open</td>
+          <td style="padding:.35rem .5rem">TCP</td>
+          <td style="padding:.35rem .5rem">&#x2699; https-alt</td>
+          <td style="padding:.35rem .5rem;font-family:monospace;font-size:.75rem"><span style='color:var(--text-muted)'>-</span></td>
+        </tr>
+      </tbody></table>
+    </div>
+    <div style="margin-bottom:1rem">
+      <div style="font-size:.8rem;font-weight:600;color:var(--text-secondary);margin-bottom:.5rem">HTTP/HTTPS Services</div>
+      <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:6px;padding:.6rem .8rem;margin-bottom:.5rem">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.35rem">
+          <span style="background:#f59e0b22;color:#f59e0b;padding:1px 6px;border-radius:3px;font-size:.7rem;font-weight:600;text-transform:uppercase">http</span>
+          <code style="font-size:.85rem;color:var(--text-primary)">http://10.0.0.10</code>
+          <span style="font-size:.8rem;color:var(--text-muted)">:80</span>
+          <span style="font-size:.8rem;font-weight:600">HTTP 200</span>
+        </div>
+        <div style="font-size:.75rem;color:var(--text-secondary)">Server: <code>nginx</code> &middot; Title: Domain Default page &middot; Content-Type: <code>text/html</code> &middot; Body: 3,864 bytes</div>
+      </div>
+      <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:6px;padding:.6rem .8rem;margin-bottom:.5rem">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.35rem">
+          <span style="background:#6bef1a22;color:#6bef1a;padding:1px 6px;border-radius:3px;font-size:.7rem;font-weight:600;text-transform:uppercase">https</span>
+          <code style="font-size:.85rem;color:var(--text-primary)">https://10.0.0.10</code>
+          <span style="font-size:.8rem;color:var(--text-muted)">:443</span>
+          <span style="font-size:.8rem;font-weight:600">HTTP 200</span>
+        </div>
+        <div style="font-size:.75rem;color:var(--text-secondary)">Server: <code>nginx</code> &middot; Title: Domain Default page &middot; Content-Type: <code>text/html</code> &middot; Body: 3,864 bytes</div>
+      </div>
+      <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:6px;padding:.6rem .8rem;margin-bottom:.5rem">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.35rem">
+          <span style="background:#6bef1a22;color:#6bef1a;padding:1px 6px;border-radius:3px;font-size:.7rem;font-weight:600;text-transform:uppercase">https</span>
+          <code style="font-size:.85rem;color:var(--text-primary)">https://10.0.0.10:8443</code>
+          <span style="font-size:.8rem;color:var(--text-muted)">:8443</span>
+          <span style="font-size:.8rem;font-weight:600">HTTP 303</span>
+        </div>
+        <div style="font-size:.75rem;color:var(--text-secondary)">Server: <code>sw-cp-server</code> &middot; Content-Type: <code>text/html; charset=UTF-8</code> &middot; Redirect: <code>https://10.0.0.10:8443/login.php?success_redirect_url=https%3A%2F%2F10.0.0.10%3A8443%2F</code></div>
+      </div>
+    </div>
+    <div style="margin-bottom:1rem">
+      <div style="font-size:.8rem;font-weight:600;color:var(--text-secondary);margin-bottom:.5rem">WAF Detection per Service</div>
+      <div style="font-size:.8rem;padding:.25rem 0;color:var(--text-muted)">
+        <code>http://10.0.0.10</code> &rarr; No WAF detected
+      </div>
+      <div style="font-size:.8rem;padding:.25rem 0;color:var(--text-muted)">
+        <code>https://10.0.0.10</code> &rarr; No WAF detected
+      </div>
+      <div style="font-size:.8rem;padding:.25rem 0;color:var(--text-muted)">
+        <code>https://10.0.0.10:8443</code> &rarr; No WAF detected
+      </div>
+    </div>
+    <div style="font-size:.75rem;color:var(--text-muted);margin-top:.5rem">Scan: 100 ports scanned &middot; 4 open &middot; 96 closed</div>
+  </div>
+  <div class="card" style="margin-bottom:1rem">
+    <h3 style="color:var(--text-primary);margin-bottom:.75rem;font-size:1rem">https://10.0.0.30</h3>
+    <div style="display:flex;flex-wrap:wrap;gap:1.5rem;margin-bottom:1rem;padding-bottom:.75rem;border-bottom:1px solid var(--border)">
+      <div><span style="color:var(--text-muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em">Status</span><br>
+        <span style="color:#ef4444;font-weight:600;font-size:.9rem">&#x25CF; Unreachable</span></div>
+      <div><span style="color:var(--text-muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em">HTTP</span><br>
+        <strong style="font-size:.9rem">"Replay GET https://10.0.0.30 timed out after 15s: ConnectTimeout"</strong></div>
+      <div><span style="color:var(--text-muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em">WAF</span><br>
+        <span style="font-size:.9rem;color:var(--text-muted)">None</span></div>
+      <div><span style="color:var(--text-muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em">Open Ports</span><br>
+        <strong style="font-size:.9rem">0</strong></div>
+      <div><span style="color:var(--text-muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em">Findings</span><br>
+        <strong style="font-size:.9rem">0</strong></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:1.5rem">
+    <h3 style="color:var(--brand);margin-bottom:.75rem;font-size:1rem">&#x1F50E; Subdomain Network Recon <span style="font-size:.75rem;color:var(--text-muted);font-weight:400">(WAF bypass — real server IPs)</span></h3>
+    <p style="font-size:.8rem;color:var(--text-secondary);margin-bottom:1rem">Subdomains often resolve to the real server IP (not the WAF proxy). Port scanning these IPs reveals the actual infrastructure behind the WAF.</p>
+    <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:8px;padding:.75rem 1rem;margin-bottom:.75rem">
+      <div style="display:flex;flex-wrap:wrap;gap:1.5rem;margin-bottom:.5rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)">
+        <div><span style="color:var(--text-muted);font-size:.65rem;text-transform:uppercase;letter-spacing:.05em">Subdomain</span><br><strong style="font-size:.9rem">webmail.aziendaanonima.com</strong></div>
+        <div><span style="color:var(--text-muted);font-size:.65rem;text-transform:uppercase;letter-spacing:.05em">IP</span><br><code style="font-size:.85rem">10.0.0.20</code></div>
+        <div><span style="color:var(--text-muted);font-size:.65rem;text-transform:uppercase;letter-spacing:.05em">Status</span><br><span style="color:#6bef1a;font-weight:600;font-size:.85rem">Online</span></div>
+        <div><span style="color:var(--text-muted);font-size:.65rem;text-transform:uppercase;letter-spacing:.05em">rDNS</span><br><code style="font-size:.8rem">mail.hostprovider.net</code></div>
+        <div><span style="color:var(--text-muted);font-size:.65rem;text-transform:uppercase;letter-spacing:.05em">Open Ports</span><br><strong style="font-size:.9rem">7</strong></div>
+      </div>
+      <div style="font-size:.8rem;color:var(--text-secondary);margin-bottom:.5rem">7 open port(s); 2 HTTP service(s); WAF detected: F5 BIG-IP ASM</div>
+      <table style="width:100%;border-collapse:collapse;font-size:.8rem;margin-bottom:.5rem">
+        <tr style="border-bottom:1px solid var(--border)">
+          <th style="text-align:left;padding:4px 8px;color:var(--text-muted);font-size:.7rem;text-transform:uppercase">Port</th>
+          <th style="text-align:left;padding:4px 8px;color:var(--text-muted);font-size:.7rem;text-transform:uppercase">Service</th>
+          <th style="text-align:left;padding:4px 8px;color:var(--text-muted);font-size:.7rem;text-transform:uppercase">Product</th>
+          <th style="text-align:left;padding:4px 8px;color:var(--text-muted);font-size:.7rem;text-transform:uppercase">Version</th>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,.05)">
+          <td style="padding:4px 8px;font-family:monospace;color:var(--brand)">25</td>
+          <td style="padding:4px 8px">smtp</td>
+          <td style="padding:4px 8px"></td>
+          <td style="padding:4px 8px"></td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,.05)">
+          <td style="padding:4px 8px;font-family:monospace;color:var(--brand)">80</td>
+          <td style="padding:4px 8px">http-proxy</td>
+          <td style="padding:4px 8px">F5 BIG-IP load balancer http proxy</td>
+          <td style="padding:4px 8px">F5 BIG-IP load balancer http proxy</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,.05)">
+          <td style="padding:4px 8px;font-family:monospace;color:var(--brand)">110</td>
+          <td style="padding:4px 8px">pop3</td>
+          <td style="padding:4px 8px">Dovecot pop3d</td>
+          <td style="padding:4px 8px">Dovecot pop3d</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,.05)">
+          <td style="padding:4px 8px;font-family:monospace;color:var(--brand)">143</td>
+          <td style="padding:4px 8px">imap</td>
+          <td style="padding:4px 8px">Dovecot imapd</td>
+          <td style="padding:4px 8px">Dovecot imapd</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,.05)">
+          <td style="padding:4px 8px;font-family:monospace;color:var(--brand)">443</td>
+          <td style="padding:4px 8px">http</td>
+          <td style="padding:4px 8px">nginx</td>
+          <td style="padding:4px 8px">nginx</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,.05)">
+          <td style="padding:4px 8px;font-family:monospace;color:var(--brand)">993</td>
+          <td style="padding:4px 8px">imap</td>
+          <td style="padding:4px 8px">Dovecot imapd</td>
+          <td style="padding:4px 8px">Dovecot imapd</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,.05)">
+          <td style="padding:4px 8px;font-family:monospace;color:var(--brand)">995</td>
+          <td style="padding:4px 8px">pop3</td>
+          <td style="padding:4px 8px">Dovecot pop3d</td>
+          <td style="padding:4px 8px">Dovecot pop3d</td>
+        </tr>
+      </table>
+      <div style="font-size:.75rem;color:var(--text-secondary);padding:.15rem 0">
+        HTTP 301: <code>http://10.0.0.20</code>
+ &middot; BigIP
+      </div>
+      <div style="font-size:.75rem;color:var(--text-secondary);padding:.15rem 0">
+        HTTP 404: <code>https://10.0.0.20</code>
+ &middot; 404 Not Found
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+<footer class="footer">
+  <div class="footer-brand">
+    <svg width="20" height="20" viewBox="0 0 64 64" fill="var(--brand)" xmlns="http://www.w3.org/2000/svg"><path d="m63.98,15.16c-18.15,10.48-25.2-10.59-42.85-.4C3.47,24.95,18.19,41.6.05,52.07c-1.02.59,15.38-6.42,33.03-16.61,17.66-10.19,31.49-19.28,30.9-20.3Zm-32.32,17.87c-13,7.5-17.95,8.57-17.2,8.13,3.98-2.3-4.52-15.74,8.48-23.24,13-7.5,20.39,6.58,24.37,10.0.0.14-2.65,3.33-15.64,10.83Z"/><path d="m50.09,27.68c1.88,8.14-1.65,16.88-9.25,21.27s-17.14,3.05-23.24-2.8l4.02-2.06c.8.63,1.66,1.17,2.55,1.63,4.45,2.25,9.92,2.29,14.57-.4,5.53-3.19,8.31-9.31,7.52-15.27l3.83-2.36Z"/></svg>
+    <svg width="80" viewBox="0 0 1466.95 512" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="m606.1,219.97h0c-12.41-6.4-26.52-9.65-41.94-9.65s-30.52,3.4-42.98,10.09c-12.55,6.75-22.54,16.35-29.68,28.55-7.13,12.17-10.74,25.36-10.74,39.2s3.62,27.63,10.77,39.51c7.15,11.88,17.26,21.34,30.04,28.11,12.69,6.72,26.95,10.13,42.4,10.13s29.94-3.35,42.49-9.97c12.65-6.67,22.75-16.18,30-28.27,7.25-12.08,10.92-25.37,10.92-39.51s-3.77-27.99-11.2-40.15c-7.43-12.15-17.54-21.59-30.06-28.05Zm-42.14,24.49c8.65,0,16.51,1.87,23.36,5.55,6.82,3.66,11.96,8.7,15.71,15.39,3.75,6.69,5.65,14.36,5.65,22.77,0,13.01-4.06,23.29-12.43,31.44-8.4,8.19-18.9,12.17-32.09,12.17-8.65,0-16.47-1.86-23.24-5.54-6.77-3.67-11.9-8.7-15.69-15.37-3.78-6.65-5.69-14.29-5.69-22.7s1.86-16.17,5.52-22.8c3.65-6.61,8.74-11.63,15.56-15.32,6.84-3.71,14.7-5.59,23.35-5.59Z"/><rect x="835.71" y="210.33" width="37.88" height="155.46"/><polygon points="911.6 210.33 911.6 242.97 984.19 242.97 901.9 365.79 1046.94 365.79 1046.94 333.15 968.9 333.15 1051.28 210.33 911.6 210.33"/><path d="m1186.99,219.97h0c-12.41-6.4-26.52-9.65-41.94-9.65s-30.52,3.4-42.98,10.09c-12.55,6.75-22.54,16.35-29.68,28.55-7.13,12.17-10.74,25.36-10.74,39.2s3.63,27.63,10.78,39.51c7.15,11.88,17.25,21.34,30.03,28.11,12.69,6.72,26.95,10.13,42.4,10.13s29.94-3.35,42.49-9.97c12.65-6.67,22.74-16.18,30-28.27,7.25-12.08,10.92-25.37,10.92-39.5s-3.77-27.99-11.2-40.15c-7.43-12.15-17.54-21.59-30.07-28.05Zm-42.14,24.49c8.65,0,16.51,1.87,23.36,5.55,6.82,3.67,11.96,8.7,15.71,15.39,3.75,6.69,5.65,14.36,5.65,22.77,0,13.01-4.06,23.29-12.42,31.44-8.4,8.19-18.9,12.17-32.1,12.17-8.65,0-16.47-1.86-23.24-5.54-6.77-3.67-11.9-8.7-15.69-15.37-3.77-6.65-5.69-14.29-5.69-22.7s1.86-16.17,5.52-22.8c3.65-6.61,8.74-11.63,15.56-15.32,6.84-3.71,14.7-5.59,23.35-5.59Z"/><polygon points="1365.63 210.33 1365.63 302.03 1289.34 210.33 1257.64 210.33 1257.64 365.79 1294.91 365.79 1294.91 272.55 1371.69 365.79 1402.9 365.79 1402.9 210.33 1365.63 210.33"/><path d="m809.03,365.86l-41.5-71.87c1.65-1.14,3.24-2.38,4.74-3.73,9.48-8.56,14.29-19.86,14.29-33.57s-4.74-24.81-14.09-33.47c-9.24-8.56-21.29-12.89-35.82-12.89h-59.93v155.46h37.88v-62.83h14.37l36.24,62.9h43.82Zm-94.43-123.63h13.35c9.8,0,19.83,1.69,19.83,14.26,0,4.92-1.37,8.44-4.19,10.74-3.1,2.53-7.71,3.82-13.71,3.82h-15.27v-28.82Z"/><path d="m504.97,129.7c-136.11,78.58-188.99-79.44-321.41-2.99-132.42,76.45-22,201.26-158.11,279.85-7.65,4.42,115.34-48.13,247.76-124.58,132.42-76.45,236.18-144.63,231.77-152.28Zm-242.39,133.99c-97.47,56.28-134.64,64.26-129.01,61.01,29.88-17.25-33.89-118.04,63.59-174.31,97.47-56.28,152.91,49.32,182.75,32.09,3.22,5.58-19.86,24.94-117.34,81.22Z"/><path d="m400.77,223.59c14.11,61.02-12.35,126.6-69.4,159.54-57.66,33.29-128.56,22.85-174.31-21.03l30.15-15.47c6,4.72,12.42,8.8,19.14,12.21,33.41,16.91,74.43,17.14,109.28-2.98,41.47-23.94,62.34-69.86,56.39-114.55l28.75-17.72Z"/><path d="m257.36,344.01c4.18-2.33,8.34-4.69,12.38-7.27,18.82-11.98,36.2-25.82,50.89-43.12,7.07-8.32,12.54-17.32,16.14-27.19-16.5,9.69-33.27,19.45-50.24,29.25-22.75,13.13-45.21,25.77-67.15,37.86,5.84,3.82,11.83,7.43,17.98,10.82,6.61,3.64,13.38,3.32,19.99-.36Z"/><path d="m323.81,193.63c-1.01-4.82-3.47-8.26-7.65-10.44-.86-.45-1.74-.88-2.64-1.24-17.01-6.87-34.08-13.55-51.38-19.59-3.55-1.24-7.09-1.58-10.7-.38-1.84.62-3.67,1.27-5.5,1.92-8.42,2.97-16.79,6.09-25.11,9.34-7.81,3.05-15.62,6.15-23.37,9.36-4.09,1.7-7.21,4.58-8.41,9.2-.93,3.58-1.59,7.23-2.13,10.9-1.67,11.35-2.34,22.77-2.46,33.5.04,7.93.27,15.11,1.06,22.25.49,4.45,1.18,8.86,2.63,13.11.89,2.6,1.96,5.08,3.17,7.47,18.51-9.57,40.05-21.3,64.82-35.6,26.75-15.44,49.88-29.17,69.21-41.08-.44-2.92-.95-5.82-1.56-8.72Z"/></svg>
+  </div>
+  <div class="footer-divider"></div>
+  <div style="color:var(--text-secondary);font-size:.85rem;margin-bottom:.5rem">
+    Una tecnologia <a href="https://www.orizon.one" style="color:var(--brand)">Orizon srl</a> &mdash; www.orizon.one
+  </div>
+  <div style="color:var(--text-muted);font-size:.75rem">
+    Report generato il 06 March 2026 &mdash; Credits utilizzati: 58
+  </div>
+</footer>
+<script>
+document.addEventListener("click", function(e) {
+  var a = e.target.closest("a[href^='#']");
+  if (!a) return;
+  e.preventDefault();
+  var id = a.getAttribute("href").substring(1);
+  var el = document.getElementById(id);
+  if (el) el.scrollIntoView({behavior: "smooth", block: "start"});
+});
+</script>
+</body></html>

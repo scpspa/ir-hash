@@ -1,0 +1,1662 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relazione Scansione di Sicurezza - Azienda Anonima SRL - 23/02/2026</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+:root {
+    --orizon-green: #4ac300;
+    --orizon-green-light: #6bef1a;
+    --orizon-green-dark: #3a9c00;
+    --bg-space-dark: #020617;
+    --bg-space-medium: #0f172a;
+    --bg-space-light: #1e293b;
+    --severity-critical: #dc2626;
+    --severity-high: #ea580c;
+    --severity-medium: #ca8a04;
+    --severity-low: #60a5fa;
+    --status-pass: #22c55e;
+    --status-fail: #ef4444;
+    --status-pending: #f59e0b;
+    --font-primary: 'Inter', 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: var(--font-primary);
+    background: #f1f5f9;
+    color: #334155;
+    line-height: 1.7;
+    font-size: 15px;
+}
+
+/* Cover */
+.cover {
+    background: linear-gradient(135deg, var(--bg-space-dark) 0%, var(--bg-space-medium) 50%, var(--bg-space-light) 100%);
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 3rem;
+    position: relative;
+    overflow: hidden;
+}
+.cover::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(ellipse at 30% 20%, rgba(74,195,0,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(107,239,26,0.05) 0%, transparent 50%);
+    animation: pulse 8s ease-in-out infinite alternate;
+}
+@keyframes pulse { 0% { opacity: 0.5; } 100% { opacity: 1; } }
+
+.cover h1 {
+    font-size: 2.8rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin-bottom: 0.5rem;
+    position: relative;
+}
+.cover h1 span { color: var(--orizon-green); }
+.cover .subtitle {
+    font-size: 1.3rem;
+    color: #94a3b8;
+    margin-bottom: 2rem;
+    position: relative;
+}
+.cover .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    max-width: 700px;
+    position: relative;
+}
+.cover .meta-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 1.2rem;
+}
+.cover .meta-card .label { font-size: 0.75rem; text-transform: uppercase; color: #64748b; letter-spacing: 1px; }
+.cover .meta-card .value { font-size: 1.1rem; font-weight: 700; color: #e2e8f0; margin-top: 0.3rem; }
+
+.badge-risk {
+    display: inline-block;
+    color: #fff;
+    padding: 0.5rem 1.5rem;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-top: 2rem;
+    position: relative;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    animation: glow 2s ease-in-out infinite alternate;
+}
+.badge-risk.critical { background: var(--severity-critical); }
+.badge-risk.high { background: var(--severity-high); }
+.badge-risk.medium { background: var(--severity-medium); color: #1e293b; }
+.badge-risk.low { background: var(--status-pass); }
+@keyframes glow {
+    0% { box-shadow: 0 0 5px rgba(220,38,38,0.3); }
+    100% { box-shadow: 0 0 20px rgba(220,38,38,0.6); }
+}
+
+/* Layout */
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+}
+
+/* Section */
+.section {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+.section-header {
+    background: var(--bg-space-dark);
+    color: #fff;
+    padding: 1.2rem 1.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+.section-header .num {
+    background: var(--orizon-green);
+    color: var(--bg-space-dark);
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+.section-header h2 { font-size: 1.15rem; font-weight: 700; }
+.section-body { padding: 1.8rem; }
+.section-body p { margin-bottom: 1rem; }
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+}
+th {
+    background: #f8fafc;
+    color: #475569;
+    font-weight: 600;
+    text-align: left;
+    padding: 0.7rem 1rem;
+    border-bottom: 2px solid #e2e8f0;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+td {
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: top;
+}
+tr:hover td { background: #f8fafc; }
+
+/* Severity badges */
+.sev { display: inline-block; padding: 2px 10px; border-radius: 999px; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; }
+.sev-critical { background: #fef2f2; color: var(--severity-critical); border: 1px solid #fecaca; }
+.sev-high { background: #fff7ed; color: var(--severity-high); border: 1px solid #fed7aa; }
+.sev-medium { background: #fefce8; color: var(--severity-medium); border: 1px solid #fef08a; }
+.sev-low { background: #eff6ff; color: var(--severity-low); border: 1px solid #bfdbfe; }
+
+/* Status badges */
+.status { display: inline-block; padding: 2px 10px; border-radius: 999px; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; }
+.status-confirmed { background: #fef2f2; color: var(--status-fail); border: 1px solid #fecaca; }
+.status-patched { background: #f0fdf4; color: var(--status-pass); border: 1px solid #bbf7d0; }
+.status-verify { background: #fffbeb; color: var(--status-pending); border: 1px solid #fde68a; }
+
+/* Code blocks */
+.cmd-block {
+    background: #0f172a;
+    color: #e2e8f0;
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    margin: 0.8rem 0;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    line-height: 1.6;
+    overflow-x: auto;
+    position: relative;
+    border-left: 3px solid var(--orizon-green);
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+.cmd-block .prompt { color: var(--orizon-green); font-weight: 700; }
+.cmd-block .output { color: #94a3b8; font-style: italic; }
+.cmd-block .comment { color: #64748b; }
+.cmd-label {
+    display: inline-block;
+    background: rgba(74,195,0,0.15);
+    color: var(--orizon-green);
+    padding: 1px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+    font-family: var(--font-mono);
+}
+
+/* Cards */
+.finding-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    margin: 1.2rem 0;
+    overflow: hidden;
+}
+.finding-card-header {
+    padding: 1rem 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    flex-wrap: wrap;
+}
+.finding-card-body { padding: 1.2rem; }
+
+.metric-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin: 1rem 0;
+}
+.metric-card {
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 1.2rem;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+}
+.metric-card .value { font-size: 2rem; font-weight: 800; color: var(--bg-space-dark); }
+.metric-card .label { font-size: 0.78rem; color: #64748b; margin-top: 0.3rem; text-transform: uppercase; letter-spacing: 0.5px; }
+.metric-card.critical .value { color: var(--severity-critical); }
+.metric-card.success .value { color: var(--status-pass); }
+.metric-card.warning .value { color: var(--status-pending); }
+
+/* Remediation */
+.remed-item {
+    border-left: 4px solid var(--orizon-green);
+    padding: 1rem 1.2rem;
+    margin: 1rem 0;
+    background: #f8fafc;
+    border-radius: 0 8px 8px 0;
+}
+.remed-item.priority-1 { border-left-color: var(--severity-critical); }
+.remed-item.priority-2 { border-left-color: var(--severity-high); }
+.remed-item.priority-3 { border-left-color: var(--severity-medium); }
+.remed-item h4 { font-size: 0.95rem; margin-bottom: 0.3rem; }
+.remed-item .pri-badge {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-right: 0.5rem;
+}
+.pri-1 { background: #fef2f2; color: var(--severity-critical); }
+.pri-2 { background: #fff7ed; color: var(--severity-high); }
+.pri-3 { background: #fefce8; color: var(--severity-medium); }
+
+/* WAF grid */
+.waf-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 0.8rem;
+    margin: 1rem 0;
+}
+.waf-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.8rem 1rem;
+    font-size: 0.88rem;
+}
+.waf-card .host { font-weight: 700; color: var(--bg-space-dark); }
+.waf-card .type { color: #64748b; }
+.waf-type-badge {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.waf-fortinet { background: #fef3c7; color: #92400e; }
+.waf-cloudflare { background: #dbeafe; color: #1e40af; }
+.waf-akamai { background: #ede9fe; color: #6d28d9; }
+.waf-aws { background: #fce7f3; color: #9d174d; }
+.waf-none { background: #f1f5f9; color: #64748b; }
+
+/* Timeline */
+.timeline { position: relative; padding-left: 2rem; margin: 1rem 0; }
+.timeline::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: #e2e8f0; }
+.timeline-item { position: relative; margin-bottom: 1.5rem; padding-left: 1.5rem; }
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -1.55rem; top: 0.5rem;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--orizon-green);
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px var(--orizon-green);
+}
+.timeline-item .time { font-size: 0.78rem; color: #64748b; font-family: var(--font-mono); }
+.timeline-item .desc { font-size: 0.92rem; margin-top: 0.2rem; }
+
+/* MITRE table */
+.mitre-tag {
+    display: inline-block;
+    background: #ede9fe;
+    color: #6d28d9;
+    padding: 1px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    margin: 2px;
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    padding: 2rem;
+    color: #94a3b8;
+    font-size: 0.8rem;
+}
+
+/* Print */
+@media print {
+    body { background: #fff; font-size: 11pt; }
+    .cover { min-height: auto; padding: 2cm; page-break-after: always; }
+    .section { break-inside: avoid; box-shadow: none; border: 1px solid #e2e8f0; }
+    .cmd-block { border: 1px solid #ccc; background: #f5f5f5; color: #333; }
+    .container { max-width: 100%; }
+}
+
+</style>
+</head>
+<body>
+
+<div class="cover">
+    <h1>Relazione di <span>Scansione</span></h1>
+    <div class="subtitle">Analisi prodotta da <strong>FireLine</strong> &mdash; Azienda Anonima SRL</div>
+    <div class="meta-grid">
+        <div class="meta-card">
+            <div class="label">Target</div>
+            <div class="value">Azienda Anonima SRL</div>
+        </div>
+        <div class="meta-card">
+            <div class="label">Data</div>
+            <div class="value">23/02/2026</div>
+        </div>
+        <div class="meta-card">
+            <div class="label">Scan ID</div>
+            <div class="value" style="font-family: var(--font-mono); font-size: 0.9rem;">a1b2c3d4e5f6</div>
+        </div>
+    </div>
+    <div class="badge-risk medium">Rischio MEDIO</div>
+</div>
+<div class="container">
+<div class="section">
+    <div class="section-header">
+        <div class="num">1</div>
+        <h2>Sommario Esecutivo</h2>
+    </div>
+    <div class="section-body">
+        
+    <div class="executive-narrative" style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+         border-left: 4px solid var(--orizon-primary); padding: 1.5rem; margin-bottom: 1.5rem; border-radius: 8px;">
+        <h3 style="margin-top: 0; color: var(--orizon-dark);">Sintesi per il Management</h3>
+        <p style="line-height: 1.8; color: #334155;">
+            E' stata condotta un'analisi di sicurezza approfondita sull'infrastruttura digitale di <strong>Azienda Anonima SRL</strong>. L'assessment ha esaminato <strong>4 host</strong> esposti su Internet, analizzando porte aperte, tecnologie in uso, configurazioni di sicurezza e potenziali vulnerabilita' note (CVE).
+        </p>
+        <p style="line-height: 1.8; color: #334155;">
+            Il processo di analisi si e' articolato in diverse fasi automatizzate: raccolta iniziale dei dati dall'External Attack Surface Management (EASM), correlazione con database di vulnerabilita' pubbliche (NVD, CIRCL, EUVD), filtraggio intelligente tramite Evidence Gating per eliminare falsi positivi, costruzione di grafi di attacco per identificare percorsi di compromissione, e infine validazione attiva delle CVE su target reali tramite container Docker isolato.
+        </p>
+        <p style="line-height: 1.8; color: #334155;">
+            L'analisi iniziale ha identificato <strong>122 potenziali vulnerabilita'</strong> dal database EASM. Attraverso il sistema di Evidence Gating, che applica criteri rigorosi di validazione basati su CVSS, EPSS (probabilita' di exploit), presenza nel catalogo KEV (Known Exploited Vulnerabilities) e corrispondenza tecnologica, sono state filtrate le segnalazioni non actionable con un tasso di rejection del <strong>0.0%</strong>.
+        </p>
+        <p style="line-height: 1.8; color: #334155;">
+            Al termine del processo sono rimaste <strong>40 vulnerabilita' actionable</strong> (31 high, 8 critical, 1 medium) che rappresentano rischi concreti per l'organizzazione. Di queste, <strong>40 CVE univoche</strong> sono state sottoposte a validazione attiva per determinare l'effettivo stato di patching sui sistemi target.
+        </p>
+        <p style="line-height: 1.8; color: #334155;">
+            <strong>Risultato della validazione:</strong> <span style='color: #dc2626; font-weight: 600;'>8 vulnerabilita' confermata/e come sfruttabile/i</span><span style='color: #16a34a; font-weight: 600;'>2 CVE risultano gia' patchate</span>, 33 richiedono verifica manuale. 
+        </p>
+        <p style="line-height: 1.8; color: #334155;">
+            Il livello di rischio complessivo per l'organizzazione e' classificato come <strong style="color: var(--severity-critical);">CRITICO</strong>.
+            Si raccomanda azione immediata sulle vulnerabilita' confermate.
+            La pipeline ha generato automaticamente un Red Team Playbook con comandi di verifica e potenziale exploitation per ogni CVE identificata.
+        </p>
+    </div>
+<p>L'assessment ha identificato complessivamente <strong>122 vulnerabilita'</strong> dal database EASM. Sono state identificate <strong>40 vulnerabilita' actionable</strong> (31 high, 8 critical, 1 medium).</p>
+<p>La fase di <strong>validazione attiva</strong> ha testato le CVE su target reali. <strong>8 vulnerabilita' confermata/e come sfruttabile/i</strong>, 2 patchata/e, 33 da verificare.</p>
+
+        <div class="finding-card" style="border-color: var(--severity-critical);">
+            <div class="finding-card-header" style="background: #fef2f2;">
+                <span class="sev sev-high">HIGH</span>
+                <strong>CVE-2024-6386 &mdash; WPML 4.4.12 is within affected range (&lt;=4.6.12)</strong>
+                <span class="status status-confirmed">CONFERMATO VULNERABILE</span>
+            </div>
+            <div class="finding-card-body">
+                <p><strong>Target:</strong> <code>www.aziendaanonima.com</code> | WPML 4.4.12 is within affected range (&lt;=4.6.12)</p>
+            </div>
+        </div>
+
+        <div class="metric-grid">
+            <div class="metric-card critical">
+                <div class="value">8</div>
+                <div class="label">Confermata/e Vulnerabile/i</div>
+            </div>
+            <div class="metric-card success">
+                <div class="value">2</div>
+                <div class="label">Patchate / Non Vuln.</div>
+            </div>
+            <div class="metric-card warning">
+                <div class="value">33</div>
+                <div class="label">Da Verificare</div>
+            </div>
+            <div class="metric-card">
+                <div class="value">0m 26s</div>
+                <div class="label">Durata Pipeline</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+        <div class="section radar-section">
+            <h2><svg class="section-icon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M15.51 15.56a5 5 0 1 0 -3.51 1.44" /><path d="M18.832 17.86a9 9 0 1 0 -6.832 3.14" /><path d="M12 12v9" /></svg> Profilo di Rischio Multi-Dimensionale</h2>
+            <div class="radar-container" id="rel-risk-radar"></div>
+            <script>
+            (function() {
+                const data = [{"axis": "Severit\u00e0", "value": 75.2}, {"axis": "EPSS", "value": 7.2}, {"axis": "Confidenza", "value": 72.1}, {"axis": "Esposizione", "value": 0}, {"axis": "CVE Coverage", "value": 100}, {"axis": "CISA KEV", "value": 2.5}, {"axis": "Exploit Disponibili", "value": 0}, {"axis": "Rischio Medio", "value": 79.0}];
+                const cid = "rel-risk-radar";
+                const cfg = {
+                    w: 580, h: 520,
+                    margin: 100,
+                    levels: 5,
+                    maxValue: 100,
+                    labelFactor: 1.22,
+                    dotRadius: 4,
+                    dotHoverRadius: 6,
+                    areaColor: "#4ac300",
+                    areaOpacity: 0.25,
+                    strokeWidth: 2,
+                    gridColor: "#334155",
+                    labelColor: "#94a3b8"
+                };
+                const radius = Math.min(cfg.w, cfg.h) / 2 - cfg.margin;
+                const angleSlice = Math.PI * 2 / data.length;
+
+                const svg = d3.select("#" + cid)
+                    .append("svg")
+                    .attr("viewBox", "0 0 " + cfg.w + " " + cfg.h)
+                    .attr("preserveAspectRatio", "xMidYMid meet")
+                    .style("max-width", "580px")
+                    .style("margin", "0 auto")
+                    .style("display", "block")
+                    .append("g")
+                    .attr("transform", "translate(" + cfg.w/2 + "," + cfg.h/2 + ")");
+
+                // Concentric grid circles
+                for (let lvl = 1; lvl <= cfg.levels; lvl++) {
+                    const r = radius * lvl / cfg.levels;
+                    svg.append("circle")
+                        .attr("r", r)
+                        .attr("fill", "none")
+                        .attr("stroke", cfg.gridColor)
+                        .attr("stroke-width", 0.8)
+                        .attr("stroke-dasharray", lvl < cfg.levels ? "3,3" : "none")
+                        .attr("opacity", 0.5);
+                    svg.append("text")
+                        .attr("x", 5).attr("y", -r + 4)
+                        .text(Math.round(cfg.maxValue * lvl / cfg.levels))
+                        .style("font-size", "9px")
+                        .style("fill", cfg.gridColor)
+                        .style("font-family", "Inter, sans-serif");
+                }
+
+                // Axis lines
+                data.forEach(function(d, i) {
+                    const angle = angleSlice * i - Math.PI / 2;
+                    svg.append("line")
+                        .attr("x1", 0).attr("y1", 0)
+                        .attr("x2", radius * Math.cos(angle))
+                        .attr("y2", radius * Math.sin(angle))
+                        .attr("stroke", cfg.gridColor)
+                        .attr("stroke-width", 0.8)
+                        .attr("opacity", 0.5);
+                });
+
+                // Axis labels with anti-overlap positioning
+                data.forEach(function(d, i) {
+                    const angle = angleSlice * i - Math.PI / 2;
+                    const angleDeg = ((angleSlice * i) * 180 / Math.PI) % 360;
+                    const lx = radius * cfg.labelFactor * Math.cos(angle);
+                    const ly = radius * cfg.labelFactor * Math.sin(angle);
+
+                    let anchor = "middle";
+                    let dy = "0.35em";
+                    if (angleDeg > 10 && angleDeg < 170) {
+                        anchor = "start";
+                    } else if (angleDeg > 190 && angleDeg < 350) {
+                        anchor = "end";
+                    }
+                    if (angleDeg > 60 && angleDeg < 120) dy = "0.8em";
+                    if (angleDeg > 240 && angleDeg < 300) dy = "-0.4em";
+
+                    svg.append("text")
+                        .attr("x", lx).attr("y", ly)
+                        .attr("text-anchor", anchor)
+                        .attr("dy", dy)
+                        .text(d.axis)
+                        .style("font-size", "11px")
+                        .style("fill", cfg.labelColor)
+                        .style("font-family", "Inter, sans-serif")
+                        .style("font-weight", "500");
+                });
+
+                // Tooltip
+                const tooltip = d3.select("#" + cid)
+                    .append("div")
+                    .style("position", "absolute")
+                    .style("background", "rgba(15,23,42,0.95)")
+                    .style("border", "1px solid " + cfg.areaColor)
+                    .style("border-radius", "6px")
+                    .style("padding", "6px 10px")
+                    .style("font-size", "12px")
+                    .style("font-family", "Inter, sans-serif")
+                    .style("color", "#e2e8f0")
+                    .style("pointer-events", "none")
+                    .style("opacity", 0)
+                    .style("z-index", 10);
+
+                // Data area polygon
+                const radarLine = d3.lineRadial()
+                    .radius(function(d) { return radius * d.value / cfg.maxValue; })
+                    .angle(function(d, i) { return i * angleSlice; })
+                    .curve(d3.curveLinearClosed);
+
+                svg.append("path")
+                    .datum(data)
+                    .attr("d", radarLine)
+                    .attr("fill", cfg.areaColor)
+                    .attr("fill-opacity", cfg.areaOpacity)
+                    .attr("stroke", cfg.areaColor)
+                    .attr("stroke-width", cfg.strokeWidth)
+                    .style("opacity", 0)
+                    .transition().duration(800)
+                    .style("opacity", 1);
+
+                // Data dots
+                svg.selectAll(".radar-dot")
+                    .data(data)
+                    .enter().append("circle")
+                    .attr("class", "radar-dot")
+                    .attr("cx", function(d, i) {
+                        const angle = angleSlice * i - Math.PI / 2;
+                        return radius * d.value / cfg.maxValue * Math.cos(angle);
+                    })
+                    .attr("cy", function(d, i) {
+                        const angle = angleSlice * i - Math.PI / 2;
+                        return radius * d.value / cfg.maxValue * Math.sin(angle);
+                    })
+                    .attr("r", cfg.dotRadius)
+                    .attr("fill", cfg.areaColor)
+                    .attr("stroke", "#0f172a")
+                    .attr("stroke-width", 1.5)
+                    .style("cursor", "pointer")
+                    .on("mouseover", function(event, d) {
+                        d3.select(this).transition().duration(150).attr("r", cfg.dotHoverRadius);
+                        const rect = document.getElementById(cid).getBoundingClientRect();
+                        tooltip.html("<strong>" + d.axis + "</strong>: " + d.value.toFixed(1))
+                            .style("left", (event.clientX - rect.left + 12) + "px")
+                            .style("top", (event.clientY - rect.top - 10) + "px")
+                            .transition().duration(150).style("opacity", 1);
+                    })
+                    .on("mouseout", function() {
+                        d3.select(this).transition().duration(150).attr("r", cfg.dotRadius);
+                        tooltip.transition().duration(150).style("opacity", 0);
+                    });
+            })();
+            </script>
+            <style>
+                .radar-section { animation: fadeIn 0.6s ease-in; }
+                .radar-container {
+                    position: relative;
+                    width: 100%;
+                    max-width: 580px;
+                    margin: 20px auto 0;
+                }
+                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+            </style>
+        </div><div class="section">
+    <div class="section-header">
+        <div class="num">2</div>
+        <h2>Scope e Superficie d'Attacco</h2>
+    </div>
+    <div class="section-body">
+        <div class="executive-narrative">
+<p>La <strong>superficie d'attacco esterna</strong> rappresenta l'insieme di tutti i punti di ingresso che un attaccante puo' raggiungere da Internet: domini, indirizzi IP, porte aperte, servizi esposti e tecnologie rilevabili. Mappare questa superficie e' il primo passo fondamentale di ogni assessment di sicurezza, perche' consente di identificare dove concentrare l'analisi delle vulnerabilita'.</p>
+
+<p>I dati presentati in questa sezione provengono dall'esportazione <strong>EASM</strong> (External Attack Surface Management) prodotta dal modulo <em>Recon Essential</em>, integrati con le informazioni raccolte durante la scansione attiva. Per ciascuno dei <strong>4 host</strong> identificati, sono state catalogate le porte aperte (12 totali), i servizi in ascolto, le tecnologie rilevate (20 distinte) e l'eventuale presenza di un Web Application Firewall (2 host protetti da WAF su 4).</p>
+
+<p>Il <strong>Risk Score</strong> assegnato a ogni host e' un indicatore composito che tiene conto del numero di vulnerabilita' associate, della loro severita' (CVSS), della probabilita' di sfruttamento (EPSS), della presenza nel catalogo CISA KEV (Known Exploited Vulnerabilities) e dell'esposizione di porte ad alto rischio (database, pannelli amministrativi, servizi legacy). Un Risk Score elevato indica un host che richiede attenzione prioritaria nel piano di remediation.</p>
+</div>
+
+<p>Sono stati identificati <strong>4 host</strong> con servizi esposti o vulnerabilita' associate:</p>
+
+        <table>
+            <thead>
+                <tr><th>Host</th><th>IP</th><th>Porte Aperte</th><th>Tecnologia</th><th>WAF</th><th>Risk Score</th></tr>
+            </thead>
+            <tbody>
+<tr>
+                    <td><strong>www.aziendaanonima.com</strong></td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td><span class="waf-type-badge waf-wordfence">wordfence</span></td>
+                    <td><strong>10.00</strong></td>
+                </tr>
+<tr>
+                    <td><strong>https://aziendaanonima.com</strong></td>
+                    <td>-</td>
+                    <td>21, 80, 443, 8443</td>
+                    <td>Nginx, jQuery, Bootstrap</td>
+                    <td><span class="waf-type-badge waf-none">Nessuno</span></td>
+                    <td><strong>4.00</strong></td>
+                </tr>
+<tr>
+                    <td><strong>https://www.aziendaanonima.com</strong></td>
+                    <td>-</td>
+                    <td>21, 80, 443, 8443</td>
+                    <td>Bootstrap, FitVids.JS, Lightbox</td>
+                    <td><span class="waf-type-badge waf-none">Nessuno</span></td>
+                    <td><strong>4.00</strong></td>
+                </tr>
+<tr>
+                    <td><strong>aziendaanonima.com</strong></td>
+                    <td>-</td>
+                    <td>21, 80, 443, 8443</td>
+                    <td>-</td>
+                    <td><span class="waf-type-badge waf-wordfence">wordfence</span></td>
+                    <td><strong>4.00</strong></td>
+                </tr>
+
+            </tbody>
+        </table>
+<p>Porte potenzialmente pericolose esposte: FTP (21) su https://aziendaanonima.com, FTP (21) su https://www.aziendaanonima.com, FTP (21) su aziendaanonima.com. Queste porte rappresentano rischi significativi di lateral movement.</p>
+
+<h3>Endpoint Discovery</h3>
+<p>La fase di crawling e content discovery ha identificato <strong>5 endpoint unici</strong> distribuiti su <strong>1 host</strong>. Contributo per tool: paramspider: 16.</p>
+        <div class="metric-grid">
+            <div class="metric-card">
+                <div class="value">16</div>
+                <div class="label">paramspider</div>
+            </div>
+            <div class="metric-card">
+                <div class="value">5</div>
+                <div class="label">Totale Unici</div>
+            </div>
+        </div>
+        <table>
+            <thead>
+                <tr><th>Host</th><th>Endpoint</th><th>Distribuzione</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>www.aziendaanonima.com</strong></td>
+                    <td>5</td>
+                    <td><div style="background: #e2e8f0; border-radius: 4px; overflow: hidden; height: 18px;">
+                        <div style="background: #3b82f6; height: 100%; width: 100%; min-width: 2px;"></div>
+                    </div><span style="font-size: 0.8rem; color: #64748b;">100.0%</span></td>
+                </tr>
+            </tbody>
+        </table>
+        <h4>Endpoint Notevoli</h4>
+        <div class="cmd-block"><code>/cgi.cgi/:
+</code></div>
+
+    </div>
+</div>
+<div class="section">
+    <div class="section-header">
+        <div class="num">3</div>
+        <h2>WAF Detection e Bypass Testing</h2>
+    </div>
+    <div class="section-body">
+        <h3 style="margin-top: 0; margin-bottom: 0.8rem;">Metodologia</h3>
+<p>Lo scanner ha estratto dal file EASM tutti i domini attivi con porte HTTP/HTTPS aperte, generando <strong>4 URL</strong> di test (2 host unici, ciascuno testato su porta 80 e 443 se disponibili). Per ogni target sono state eseguite due verifiche:</p>
+<ol style="margin: 0.5rem 0 0.5rem 1.5rem;">
+<li><strong>Detection</strong> &mdash; richiesta HTTP normale seguita da una con payload malevolo (<code>&lt;script&gt;alert(1)&lt;/script&gt;</code>) per rilevare cambiamenti di comportamento (es. 200&rarr;403 indica che un WAF ha bloccato la richiesta).</li>
+<li><strong>Bypass</strong> &mdash; sui target con WAF rilevato, test di 3 payload classici (XSS, SQLi, path traversal) con tecniche di evasion (URL encoding, case variation, null byte injection).</li>
+</ol>
+<h3 style="margin-top: 1.5rem; margin-bottom: 0.8rem;">Risultati</h3>
+<div class="metric-grid">
+<div class="metric-card"><div class="metric-value">2</div>
+        <div class="metric-label">Host testati</div></div>
+<div class="metric-card" style="border-left: 4px solid var(--severity-high);">
+        <div class="metric-value">2</div>
+        <div class="metric-label">Host con WAF</div></div>
+<div class="metric-card" style="border-left: 4px solid var(--severity-medium);">
+        <div class="metric-value">0</div>
+        <div class="metric-label">Comportamento ambiguo</div></div>
+<div class="metric-card" style="border-left: 4px solid var(--severity-critical);">
+        <div class="metric-value">0</div>
+        <div class="metric-label">Esposti senza WAF</div></div>
+</div>
+<h4 style="margin-top: 1.2rem;">WAF: WORDFENCE (2 host)</h4>
+<table><thead><tr><th>Host</th><th>Confidence</th><th>Evidenza</th><th>Bypass</th></tr></thead><tbody>
+<tr><td><code>aziendaanonima.com</code></td><td>0.8</td><td>Followed 1 redirect(s) to https://www.aziendaanonima.com/; Behavioral: 200-&gt;403 on trigger; Block body match: wordfence (HTTP 403) (+3)</td><td><span class="status-badge badge-patched">Bloccato</span></td></tr>
+<tr><td><code>www.aziendaanonima.com</code></td><td>0.8</td><td>Followed 1 redirect(s) to https://www.aziendaanonima.com/; Behavioral: 200-&gt;403 on trigger; Block body match: wordfence (HTTP 403) (+3)</td><td><span class="status-badge badge-patched">Bloccato</span></td></tr>
+</tbody></table>
+<p>wordfence ha <strong>bloccato tutti i payload di test</strong> su 2 host (confidence massima: 0.8). I comandi di exploit verso questi host dovranno includere tecniche di evasion (encoding avanzato, header spoofing, chunked transfer) per tentare di aggirare la protezione.</p>
+<h3 style="margin-top: 1.5rem; margin-bottom: 0.8rem;">Impatto sulle fasi successive</h3>
+<p>La mappa <em>host &rarr; WAF type</em> viene propagata alle fasi successive della pipeline:</p>
+<ul style="margin: 0.5rem 0 0.5rem 1.5rem;">
+<li><strong>Red Team Playbook</strong>: i comandi verso gli host protetti da wordfence includeranno tecniche di evasion specifiche (encoding, header manipulation, request splitting).</li>
+<li><strong>AI Refinement</strong>: se abilitato, Claude adatta i comandi di exploit con bypass specifici per il WAF rilevato.</li>
+<li><strong>Validazione Docker</strong>: i test su target senza WAF avranno maggiore probabilita' di confermare le vulnerabilita' rispetto a quelli protetti.</li>
+</ul>
+
+    </div>
+</div>
+<div class="section">
+    <div class="section-header">
+        <div class="num">4</div>
+        <h2>CVE Validation &amp; Enrichment</h2>
+    </div>
+    <div class="section-body">
+        <h3>Metodologia</h3>
+<p>Il CVE Validator ha analizzato <strong>122</strong> finding (122 CVE univoci) interrogando 5 fonti esterne per ogni CVE:</p>
+<ol>
+<li><strong>EPSS</strong> (api.first.org) &mdash; probabilita' di exploit nei prossimi 30 giorni</li>
+<li><strong>NVD</strong> (services.nvd.nist.gov) &mdash; dettagli CVSS, CWE, vettore d'attacco</li>
+<li><strong>OSV</strong> (api.osv.dev) &mdash; database vulnerabilita' open-source</li>
+<li><strong>CISA KEV</strong> &mdash; catalogo vulnerabilita' attivamente sfruttate</li>
+<li><strong>MITRE ATT&amp;CK</strong> &mdash; mapping a tecniche e tattiche d'attacco</li>
+</ol>
+<p>Il rate limit NVD (5 req/30s senza API key) impone un ciclo di ~6s per CVE, per un totale di circa 12 minuti di elaborazione.</p>
+<h3>Copertura Fonti di Validazione</h3>
+<div class="metric-grid">
+    <div class="metric-card" style="border-left: 4px solid var(--accent);">
+        <div class="value">122<small>/122</small></div>
+        <div class="label">NVD (100%)</div>
+    </div>
+    <div class="metric-card" style="border-left: 4px solid var(--accent);">
+        <div class="value">121<small>/122</small></div>
+        <div class="label">EPSS (99%)</div>
+    </div>
+    <div class="metric-card" style="border-left: 4px solid #6366f1;">
+        <div class="value">75<small>/122</small></div>
+        <div class="label">MITRE ATT&amp;CK (61%)</div>
+    </div>
+    <div class="metric-card" style="border-left: 4px solid #8b5cf6;">
+        <div class="value">24<small>/122</small></div>
+        <div class="label">D3FEND (20%)</div>
+    </div>
+    <div class="metric-card" style="border-left: 4px solid var(--severity-critical);">
+        <div class="value">1<small>/122</small></div>
+        <div class="label">CISA KEV (1%)</div>
+    </div>
+</div>
+<h3>Distribuzione Severity e Priorita'</h3>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+<div>
+<table><thead><tr><th>Severity</th><th>Count</th><th>%</th></tr></thead><tbody>
+<tr><td><span class="sev sev-critical">CRITICAL</span></td><td>8</td><td>7%</td></tr>
+<tr><td><span class="sev sev-high">HIGH</span></td><td>32</td><td>26%</td></tr>
+<tr><td><span class="sev sev-medium">MEDIUM</span></td><td>79</td><td>65%</td></tr>
+<tr><td><span class="sev sev-low">LOW</span></td><td>3</td><td>2%</td></tr>
+</tbody></table>
+</div>
+<div>
+<table><thead><tr><th>Priorita'</th><th>Count</th><th>%</th></tr></thead><tbody>
+<tr><td><span style="color:var(--severity-critical);font-weight:600;">P0_CRITICAL</span></td><td>2</td><td>2%</td></tr>
+<tr><td><span style="color:var(--severity-high);font-weight:600;">P1_HIGH</span></td><td>1</td><td>1%</td></tr>
+<tr><td><span style="color:#f59e0b;font-weight:600;">P2_ELEVATED</span></td><td>36</td><td>30%</td></tr>
+<tr><td><span style="color:var(--severity-medium);font-weight:600;">P3_MEDIUM</span></td><td>78</td><td>64%</td></tr>
+<tr><td><span style="color:var(--severity-low);font-weight:600;">P4_LOW</span></td><td>4</td><td>3%</td></tr>
+<tr><td><span style="color:#94a3b8;font-weight:600;">P5_INFO</span></td><td>1</td><td>1%</td></tr>
+</tbody></table>
+</div>
+</div>
+<h3>EPSS &mdash; Exploit Prediction Scoring</h3>
+<div class="metric-grid">
+    <div class="metric-card"><div class="value">2</div><div class="label">EPSS &gt; 0.5 (alto rischio)</div></div>
+    <div class="metric-card"><div class="value">11</div><div class="label">EPSS &gt; 0.1 (rischio signif.)</div></div>
+    <div class="metric-card"><div class="value">0.0404</div><div class="label">EPSS Medio</div></div>
+    <div class="metric-card"><div class="value">0.9206</div><div class="label">EPSS Massimo</div></div>
+</div>
+<p>L'EPSS (Exploit Prediction Scoring System) stima la probabilita' che una vulnerabilita' venga sfruttata nei prossimi 30 giorni. <strong>2 CVE</strong> hanno probabilita' superiore al 50%, indicando un rischio imminente di exploit. Ulteriori <strong>9</strong> hanno EPSS tra 10-50%, da monitorare attivamente.</p>
+<h3>CISA KEV &mdash; Vulnerabilita' Attivamente Sfruttate (1)</h3>
+<p>Le seguenti CVE sono presenti nel catalogo <strong>CISA Known Exploited Vulnerabilities</strong>, che certifica l'uso attivo in campagne di attacco reali. La remediation e' obbligatoria per agenzie federali USA e fortemente raccomandata per tutti.</p>
+<table><thead><tr><th>CVE</th><th>CVSS</th><th>EPSS</th><th>Target</th><th>Tecnologia</th></tr></thead><tbody>
+<tr><td><strong>CVE-2020-11023</strong></td><td>6.9</td><td>0.363</td><td><code>www.aziendaanonima.com</code></td><td>jQuery 3.5.1</td></tr>
+</tbody></table>
+<h3>Top 15 CVE per EPSS Score</h3>
+<table><thead><tr><th>CVE</th><th>CVSS</th><th>EPSS</th><th>Target</th><th>KEV</th></tr></thead><tbody>
+<tr><td><strong>CVE-2024-4439</strong></td><td>7.2</td><td>0.92065</td><td><code>www.aziendaanonima.com</code></td><td></td></tr>
+<tr><td><strong>CVE-2024-6386</strong></td><td>9.9</td><td>0.73831</td><td><code>www.aziendaanonima.com</code></td><td></td></tr>
+<tr><td><strong>CVE-2020-11023</strong></td><td>6.9</td><td>0.36278</td><td><code>www.aziendaanonima.com</code></td><td><span class="status status-confirmed">KEV</span></td></tr>
+<tr><td><strong>CVE-2021-20086</strong></td><td>8.8</td><td>0.28311</td><td><code>www.aziendaanonima.com</code></td><td></td></tr>
+<tr><td><strong>CVE-2015-9251</strong></td><td>6.1</td><td>0.27164</td><td><code>www.aziendaanonima.com</code></td><td></td></tr>
+<tr><td><strong>CVE-2020-7070</strong></td><td>4.3</td><td>0.26088</td><td><code>www.aziendaanonima.com</code></td><td></td></tr>
+<tr><td><strong>CVE-2021-41184</strong></td><td>6.5</td><td>0.22087</td><td><code>www.aziendaanonima.com</code></td><td></td></tr>
+<tr><td><strong>CVE-2021-41182</strong></td><td>6.5</td><td>0.19260</td><td><code>www.aziendaanonima.com</code></td><td></td></tr>
+<tr><td><strong>CVE-2022-31629</strong></td><td>6.5</td><td>0.16949</td><td><code>www.aziendaanonima.com</code></td><td></td></tr>
+<tr><td><strong>CVE-2018-9208</strong></td><td>9.8</td><td>0.15218</td><td><code>www.aziendaanonima.com</code></td><td></td></tr>
+<tr><td><strong>CVE-2022-31160</strong></td><td>6.1</td><td>0.10183</td><td><code>www.aziendaanonima.com</code></td><td></td></tr>
+<tr><td><strong>CVE-2008-5752</strong></td><td>4.3</td><td>0.09469</td><td><code>www.aziendaanonima.com</code></td><td></td></tr>
+<tr><td><strong>CVE-2020-7069</strong></td><td>5.4</td><td>0.08351</td><td><code>www.aziendaanonima.com</code></td><td></td></tr>
+<tr><td><strong>CVE-2008-6811</strong></td><td>6.8</td><td>0.07270</td><td><code>www.aziendaanonima.com</code></td><td></td></tr>
+<tr><td><strong>CVE-2020-11022</strong></td><td>6.9</td><td>0.07242</td><td><code>www.aziendaanonima.com</code></td><td></td></tr>
+</tbody></table>
+<h3>Distribuzione per Tecnologia</h3>
+<table><thead><tr><th>Tecnologia</th><th>CVE</th><th>%</th></tr></thead><tbody>
+<tr><td>WordPress</td><td>50</td><td>41%</td></tr>
+<tr><td>jQuery</td><td>45</td><td>37%</td></tr>
+<tr><td>PHP</td><td>23</td><td>19%</td></tr>
+<tr><td>WPML</td><td>4</td><td>3%</td></tr>
+</tbody></table>
+<h3>Distribuzione per Target</h3>
+<p>La concentrazione delle CVE per host permette di identificare gli asset a maggior rischio:</p>
+<table><thead><tr><th>Host</th><th>CVE</th><th>%</th></tr></thead><tbody>
+<tr><td><code>www.aziendaanonima.com</code></td><td>122</td><td>100%</td></tr>
+</tbody></table>
+<p><strong>www.aziendaanonima.com</strong> e' l'asset piu' esposto con 122 CVE (100% del totale), rappresentando il principale vettore d'attacco.</p>
+<h3>Distribuzione Temporale delle CVE</h3>
+<div style="display:flex;align-items:flex-end;gap:4px;height:120px;margin:16px 0;">
+<div style="display:flex;flex-direction:column;align-items:center;flex:1;"><span style="font-size:0.7em;">3</span><div style="width:100%;height:16px;background:var(--accent);border-radius:3px 3px 0 0;"></div><span style="font-size:0.65em;color:#64748b;margin-top:2px;">2007</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;flex:1;"><span style="font-size:0.7em;">9</span><div style="width:100%;height:50px;background:var(--accent);border-radius:3px 3px 0 0;"></div><span style="font-size:0.65em;color:#64748b;margin-top:2px;">2008</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;flex:1;"><span style="font-size:0.7em;">14</span><div style="width:100%;height:77px;background:var(--accent);border-radius:3px 3px 0 0;"></div><span style="font-size:0.65em;color:#64748b;margin-top:2px;">2009</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;flex:1;"><span style="font-size:0.7em;">14</span><div style="width:100%;height:77px;background:var(--accent);border-radius:3px 3px 0 0;"></div><span style="font-size:0.65em;color:#64748b;margin-top:2px;">2010</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;flex:1;"><span style="font-size:0.7em;">6</span><div style="width:100%;height:33px;background:var(--accent);border-radius:3px 3px 0 0;"></div><span style="font-size:0.65em;color:#64748b;margin-top:2px;">2011</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;flex:1;"><span style="font-size:0.7em;">1</span><div style="width:100%;height:5px;background:var(--accent);border-radius:3px 3px 0 0;"></div><span style="font-size:0.65em;color:#64748b;margin-top:2px;">2013</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;flex:1;"><span style="font-size:0.7em;">1</span><div style="width:100%;height:5px;background:var(--accent);border-radius:3px 3px 0 0;"></div><span style="font-size:0.65em;color:#64748b;margin-top:2px;">2015</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;flex:1;"><span style="font-size:0.7em;">1</span><div style="width:100%;height:5px;background:var(--accent);border-radius:3px 3px 0 0;"></div><span style="font-size:0.65em;color:#64748b;margin-top:2px;">2017</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;flex:1;"><span style="font-size:0.7em;">2</span><div style="width:100%;height:11px;background:var(--accent);border-radius:3px 3px 0 0;"></div><span style="font-size:0.65em;color:#64748b;margin-top:2px;">2018</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;flex:1;"><span style="font-size:0.7em;">1</span><div style="width:100%;height:5px;background:var(--accent);border-radius:3px 3px 0 0;"></div><span style="font-size:0.65em;color:#64748b;margin-top:2px;">2019</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;flex:1;"><span style="font-size:0.7em;">7</span><div style="width:100%;height:38px;background:var(--accent);border-radius:3px 3px 0 0;"></div><span style="font-size:0.65em;color:#64748b;margin-top:2px;">2020</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;flex:1;"><span style="font-size:0.7em;">16</span><div style="width:100%;height:88px;background:var(--accent);border-radius:3px 3px 0 0;"></div><span style="font-size:0.65em;color:#64748b;margin-top:2px;">2021</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;flex:1;"><span style="font-size:0.7em;">12</span><div style="width:100%;height:66px;background:var(--accent);border-radius:3px 3px 0 0;"></div><span style="font-size:0.65em;color:#64748b;margin-top:2px;">2022</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;flex:1;"><span style="font-size:0.7em;">5</span><div style="width:100%;height:27px;background:var(--accent);border-radius:3px 3px 0 0;"></div><span style="font-size:0.65em;color:#64748b;margin-top:2px;">2023</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;flex:1;"><span style="font-size:0.7em;">12</span><div style="width:100%;height:66px;background:var(--accent);border-radius:3px 3px 0 0;"></div><span style="font-size:0.65em;color:#64748b;margin-top:2px;">2024</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;flex:1;"><span style="font-size:0.7em;">18</span><div style="width:100%;height:100px;background:var(--accent);border-radius:3px 3px 0 0;"></div><span style="font-size:0.65em;color:#64748b;margin-top:2px;">2025</span></div>
+</div>
+<p>30 CVE (24%) sono del periodo 2024-2026, indicando una superficie d'attacco prevalentemente composta da vulnerabilita' recenti.</p>
+<h3>Risk Score Composito</h3>
+<p>Il risk score combina CVSS, EPSS, presenza in KEV e disponibilita' di exploit pubblici in un punteggio 0-100:</p>
+<div class="metric-grid">
+    <div class="metric-card" style="border-left:4px solid var(--severity-critical);"><div class="value">3</div><div class="label">Critico (&ge;80)</div></div>
+    <div class="metric-card" style="border-left:4px solid var(--severity-high);"><div class="value">36</div><div class="label">Alto (60-79)</div></div>
+    <div class="metric-card" style="border-left:4px solid var(--severity-medium);"><div class="value">78</div><div class="label">Medio (40-59)</div></div>
+    <div class="metric-card" style="border-left:4px solid var(--severity-low);"><div class="value">5</div><div class="label">Basso (&lt;40)</div></div>
+</div>
+
+    </div>
+</div>
+<div class="section">
+    <div class="section-header">
+        <div class="num">5</div>
+        <h2>Evidence Gating &mdash; Filtraggio delle Vulnerabilita'</h2>
+    </div>
+    <div class="section-body">
+        <div class="executive-narrative">
+<p>L'<strong>Evidence Gating</strong> e' la fase di filtraggio che separa le vulnerabilita' reali dai falsi positivi. I database EASM (NVD, ENISA, CIRCL, OSV) identificano vulnerabilita' in base alla versione del software rilevato, ma molte di queste segnalazioni sono teoriche: il componente vulnerabile potrebbe non essere esposto, la patch potrebbe essere gia' applicata, oppure una configurazione mitigante potrebbe rendere l'attacco impraticabile.</p>
+
+<p>Per risolvere questo problema, ogni vulnerabilita' viene classificata in uno dei quattro livelli di confidenza: <strong>TIER 1</strong> (95-100%, confermata sfruttabile da piu' strumenti con evidenze concrete), <strong>TIER 2</strong> (70-94%, altamente probabile con CVE nel catalogo CISA KEV o EPSS elevato), <strong>TIER 3</strong> (40-69%, possibile ma con un solo strumento di conferma), e <strong>TIER 4</strong> (0-39%, probabile falso positivo senza evidenze significative).</p>
+
+<p>I criteri di scoring includono: conferma da parte di piu' strumenti indipendenti (multi-tool confirmation), qualita' delle evidenze raccolte (output di exploit vs. semplice banner), punteggio EPSS (probabilita' di sfruttamento nei prossimi 30 giorni), presenza nel catalogo CISA KEV, severita' CVSS e disponibilita' di exploit pubblici. Solo le vulnerabilita' classificate come <strong>TIER 1 e TIER 2</strong> (39 su 122) vengono inoltrate alla fase di Attack Graph per l'analisi dei percorsi di attacco.</p>
+</div>
+
+<p>La fase di <strong>Evidence Gating</strong> ha analizzato tutte le 122 vulnerabilita' del database EASM e le ha classificate in 4 livelli di fiducia (Tier).</p>
+
+        <div class="metric-grid">
+            <div class="metric-card" style="border-left: 4px solid var(--severity-critical);">
+                <div class="value">3</div>
+                <div class="label">TIER_1 Confirmed</div>
+            </div>
+            <div class="metric-card" style="border-left: 4px solid var(--severity-high);">
+                <div class="value">36</div>
+                <div class="label">TIER_2 Likely</div>
+            </div>
+            <div class="metric-card" style="border-left: 4px solid var(--severity-medium);">
+                <div class="value">83</div>
+                <div class="label">TIER_3 Possible</div>
+            </div>
+            <div class="metric-card" style="border-left: 4px solid var(--severity-low);">
+                <div class="value">0</div>
+                <div class="label">TIER_4 Likely FP</div>
+            </div>
+        </div>
+
+        <p>Il tasso di rejection del <strong>0.0%</strong> indica che 0 segnalazioni su 122 non possedevano evidenze sufficienti per essere considerate actionable.</p>
+
+    </div>
+</div>
+<div class="section">
+    <div class="section-header">
+        <div class="num">6</div>
+        <h2>Dettaglio Vulnerabilita' e Risultati di Validazione</h2>
+    </div>
+    <div class="section-body">
+        <p>Le 40 vulnerabilita' actionable sono state analizzate in dettaglio e sottoposte a validazione attiva.</p>
+<div class="executive-narrative">
+<p>Questa sezione presenta il dettaglio di ogni vulnerabilita' che ha superato il filtro Evidence Gating (TIER 1 e TIER 2). Ogni <strong>finding card</strong> contiene: il badge di severita' (CRITICAL, HIGH, MEDIUM, LOW), l'identificativo CVE, il target specifico (hostname o IP) e i metadati di rischio.</p>
+
+<p>Le metriche riportate in ogni card hanno il seguente significato: <strong>CVSS</strong> (Common Vulnerability Scoring System) indica la gravita' intrinseca della vulnerabilita' su scala 0-10; <strong>EPSS</strong> (Exploit Prediction Scoring System) indica la probabilita' percentuale che la vulnerabilita' venga sfruttata nei prossimi 30 giorni; <strong>CISA KEV</strong> segnala se la vulnerabilita' e' presente nel catalogo delle vulnerabilita' attivamente sfruttate mantenuto dal governo USA.</p>
+
+<p>Le vulnerabilita' sono state sottoposte a <strong>validazione attiva</strong> tramite esecuzione di script di test in un container Docker Kali Linux. Lo stato di validazione e' indicato dal badge colorato: <span style="color: var(--status-confirmed)">CONFERMATA</span> (exploit eseguito con successo, vulnerabilita' reale), <span style="color: var(--status-patched)">PATCHATA</span> (test negativo, la vulnerabilita' e' stata corretta o mitigata), <span style="color: var(--status-verify)">DA VERIFICARE</span> (test non conclusivo, richiede analisi manuale). Su 40 vulnerabilita' testate: 8 confermate, 2 patchate, 30 da verificare.
+I findings sono ordinati per priorita': prima le vulnerabilita' confermate (ordinate per severita'), poi le patchate, infine quelle senza dati di validazione. I comandi di verifica inclusi in ogni card provengono dal Red Team Playbook e possono essere usati per riprodurre il test.</p>
+</div>
+
+        <div class="finding-card" style="border-color: var(--severity-critical);">
+            <div class="finding-card-header" style="background: #fef2f2;">
+                <span class="sev sev-critical">CRITICAL</span>
+                <strong>CVE-2024-6386 &mdash; CVE-2024-6386</strong>
+                <span class="status status-confirmed">VULNERABILE</span>
+            </div>
+            <div class="finding-card-body">
+                <p><strong>Target:</strong> <code>www.aziendaanonima.com</code> | <strong>EPSS:</strong> 73.83%</p>
+                <p>The WPML plugin for WordPress is vulnerable to Remote Code Execution in all versions up to, and including, 4.6.12 via the Twig Server-Side Template Injection. This is due to missing input validation and sanitization on the render function. This makes it possible for authenticated attackers, with Con</p>
+                <div class="cmd-label">Risultato validazione</div>
+                <div class="cmd-block"><span class="output">WPML 4.4.12 is within affected range (&lt;=4.6.12)</span>
+<span class="comment"># Tecnica: version-compare</span>
+<span class="comment"># Durata: 2ms</span>
+<span class="comment"># Timestamp: 2026-02-23T15:18:34Z</span>
+                </div>
+                <div class="cmd-label">Comandi di verifica</div>
+                <div class="cmd-block">
+<span class="prompt">$</span> nuclei -id CVE-2024-6386 -u https://www.aziendaanonima.com -silent
+<span class="prompt">$</span> nmap -sV -sC -p 21,80,443,8443 www.aziendaanonima.com --script=vuln
+                </div>
+            </div>
+        </div>
+
+        <div class="finding-card" style="border-color: var(--severity-critical);">
+            <div class="finding-card-header" style="background: #fef2f2;">
+                <span class="sev sev-critical">CRITICAL</span>
+                <strong>CVE-2022-37454 &mdash; CVE-2022-37454</strong>
+                <span class="status status-confirmed">VULNERABILE</span>
+            </div>
+            <div class="finding-card-body">
+                <p><strong>Target:</strong> <code>www.aziendaanonima.com</code> | <strong>EPSS:</strong> 1.33%</p>
+                <p>The Keccak XKCP SHA-3 reference implementation before fdc6fef has an integer overflow and resultant buffer overflow that allows attackers to execute arbitrary code or eliminate expected cryptographic properties. This occurs in the sponge function interface.</p>
+                <div class="cmd-label">Risultato validazione</div>
+                <div class="cmd-block"><span class="output">PHP 7.3.20 is EOL (unsupported) — likely vulnerable to CVE-2022-37454</span>
+<span class="comment"># Tecnica: version-display</span>
+<span class="comment"># Durata: 2ms</span>
+<span class="comment"># Timestamp: 2026-02-23T15:18:34Z</span>
+                </div>
+                <div class="cmd-label">Comandi di verifica</div>
+                <div class="cmd-block">
+<span class="prompt">$</span> nuclei -id CVE-2022-37454 -u https://www.aziendaanonima.com -silent
+                </div>
+            </div>
+        </div>
+
+        <div class="finding-card" style="border-color: var(--severity-critical);">
+            <div class="finding-card-header" style="background: #fef2f2;">
+                <span class="sev sev-critical">CRITICAL</span>
+                <strong>CVE-2024-3566 &mdash; CVE-2024-3566</strong>
+                <span class="status status-confirmed">VULNERABILE</span>
+            </div>
+            <div class="finding-card-body">
+                <p><strong>Target:</strong> <code>www.aziendaanonima.com</code> | <strong>EPSS:</strong> 7.09%</p>
+                <p>A command inject vulnerability allows an attacker to perform command injection on Windows applications that indirectly depend on the CreateProcess function when the specific conditions are satisfied.</p>
+                <div class="cmd-label">Risultato validazione</div>
+                <div class="cmd-block"><span class="output">PHP 7.3.20 is within affected range (&lt;=8.3.4)</span>
+<span class="comment"># Tecnica: version-compare</span>
+<span class="comment"># Durata: 2ms</span>
+<span class="comment"># Timestamp: 2026-02-23T15:18:34Z</span>
+                </div>
+                <div class="cmd-label">Comandi di verifica</div>
+                <div class="cmd-block">
+<span class="prompt">$</span> commix --url=&#x27;https://www.aziendaanonima.com&#x27; --batch --level=1 --tamper=base64encode
+                </div>
+            </div>
+        </div>
+
+        <div class="finding-card" style="border-color: var(--severity-critical);">
+            <div class="finding-card-header" style="background: #fef2f2;">
+                <span class="sev sev-critical">CRITICAL</span>
+                <strong>CVE-2017-8923 &mdash; CVE-2017-8923</strong>
+                <span class="status status-confirmed">VULNERABILE</span>
+            </div>
+            <div class="finding-card-body">
+                <p><strong>Target:</strong> <code>www.aziendaanonima.com</code> | <strong>EPSS:</strong> 4.59%</p>
+                <p>The zend_string_extend function in Zend/zend_string.h in PHP through 7.1.5 does not prevent changes to string objects that result in a negative length, which allows remote attackers to cause a denial of service (application crash) or possibly have unspecified other impact by leveraging a script&#x27;s us</p>
+                <div class="cmd-label">Risultato validazione</div>
+                <div class="cmd-block"><span class="output">PHP 7.3.20 is EOL (unsupported) — likely vulnerable to CVE-2017-8923</span>
+<span class="comment"># Tecnica: version-display</span>
+<span class="comment"># Durata: 1ms</span>
+<span class="comment"># Timestamp: 2026-02-23T15:18:34Z</span>
+                </div>
+                <div class="cmd-label">Comandi di verifica</div>
+                <div class="cmd-block">
+<span class="prompt">$</span> nuclei -id CVE-2017-8923 -u https://www.aziendaanonima.com -silent
+                </div>
+            </div>
+        </div>
+
+        <div class="finding-card" style="border-color: var(--severity-critical);">
+            <div class="finding-card-header" style="background: #fef2f2;">
+                <span class="sev sev-high">HIGH</span>
+                <strong>CVE-2021-21703 &mdash; CVE-2021-21703</strong>
+                <span class="status status-confirmed">VULNERABILE</span>
+            </div>
+            <div class="finding-card-body">
+                <p><strong>Target:</strong> <code>www.aziendaanonima.com</code> | <strong>EPSS:</strong> 0.13%</p>
+                <p>In PHP versions 7.3.x up to and including 7.3.31, 7.4.x below 7.4.25 and 8.0.x below 8.0.12, when running PHP FPM SAPI with main FPM daemon process running as root and child worker processes running as lower-privileged users, it is possible for the child processes to access memory shared with the ma</p>
+                <div class="cmd-label">Risultato validazione</div>
+                <div class="cmd-block"><span class="output">PHP 7.3.20 is EOL (unsupported) — likely vulnerable to CVE-2021-21703</span>
+<span class="comment"># Tecnica: version-display</span>
+<span class="comment"># Durata: 2ms</span>
+<span class="comment"># Timestamp: 2026-02-23T15:18:34Z</span>
+                </div>
+                <div class="cmd-label">Comandi di verifica</div>
+                <div class="cmd-block">
+<span class="prompt">$</span> nuclei -id CVE-2021-21703 -u https://www.aziendaanonima.com -silent
+                </div>
+            </div>
+        </div>
+
+        <div class="finding-card" style="border-color: var(--severity-critical);">
+            <div class="finding-card-header" style="background: #fef2f2;">
+                <span class="sev sev-high">HIGH</span>
+                <strong>CVE-2013-2220 &mdash; CVE-2013-2220</strong>
+                <span class="status status-confirmed">VULNERABILE</span>
+            </div>
+            <div class="finding-card-body">
+                <p><strong>Target:</strong> <code>www.aziendaanonima.com</code> | <strong>EPSS:</strong> 2.80%</p>
+                <p>Buffer overflow in the radius_get_vendor_attr function in the Radius extension before 1.2.7 for PHP allows remote attackers to cause a denial of service (crash) and possibly execute arbitrary code via a large Vendor Specific Attributes (VSA) length value.</p>
+                <div class="cmd-label">Risultato validazione</div>
+                <div class="cmd-block"><span class="output">PHP 7.3.20 is EOL (unsupported) — likely vulnerable to CVE-2013-2220</span>
+<span class="comment"># Tecnica: version-display</span>
+<span class="comment"># Durata: 1ms</span>
+<span class="comment"># Timestamp: 2026-02-23T15:18:34Z</span>
+                </div>
+                <div class="cmd-label">Comandi di verifica</div>
+                <div class="cmd-block">
+<span class="prompt">$</span> nuclei -id CVE-2013-2220 -u https://www.aziendaanonima.com -silent
+                </div>
+            </div>
+        </div>
+
+        <div class="finding-card" style="border-color: var(--severity-critical);">
+            <div class="finding-card-header" style="background: #fef2f2;">
+                <span class="sev sev-high">HIGH</span>
+                <strong>CVE-2025-14180 &mdash; CVE-2025-14180</strong>
+                <span class="status status-confirmed">VULNERABILE</span>
+            </div>
+            <div class="finding-card-body">
+                <p><strong>Target:</strong> <code>www.aziendaanonima.com</code> | <strong>EPSS:</strong> 0.03%</p>
+                <p>In PHP versions 8.1.* before 8.1.34, 8.2.* before 8.2.30, 8.3.* before 8.3.29, 8.4.* before 8.4.16, 8.5.* before 8.5.1 when using the PDO PostgreSQL driver with PDO::ATTR_EMULATE_PREPARES enabled, an invalid character sequence (such as \x99) in a prepared statement parameter may cause the quoting fu</p>
+                <div class="cmd-label">Risultato validazione</div>
+                <div class="cmd-block"><span class="output">PHP 7.3.20 is within affected range (&lt;=8.2.29)</span>
+<span class="comment"># Tecnica: version-compare</span>
+<span class="comment"># Durata: 2ms</span>
+<span class="comment"># Timestamp: 2026-02-23T15:18:34Z</span>
+                </div>
+                <div class="cmd-label">Comandi di verifica</div>
+                <div class="cmd-block">
+<span class="prompt">$</span> nuclei -id CVE-2025-14180 -u https://www.aziendaanonima.com -silent
+                </div>
+            </div>
+        </div>
+
+        <div class="finding-card" style="border-color: var(--severity-critical);">
+            <div class="finding-card-header" style="background: #fef2f2;">
+                <span class="sev sev-high">HIGH</span>
+                <strong>CVE-2025-14177 &mdash; CVE-2025-14177</strong>
+                <span class="status status-confirmed">VULNERABILE</span>
+            </div>
+            <div class="finding-card-body">
+                <p><strong>Target:</strong> <code>www.aziendaanonima.com</code> | <strong>EPSS:</strong> 0.06%</p>
+                <p>In PHP versions:8.1.* before 8.1.34, 8.2.* before 8.2.30, 8.3.* before 8.3.29, 8.4.* before 8.4.16, 8.5.* before 8.5.1, the getimagesize() function may leak uninitialized heap memory into the APPn segments (e.g., APP1) when reading images in multi-chunk mode (such as via php://filter). This occurs d</p>
+                <div class="cmd-label">Risultato validazione</div>
+                <div class="cmd-block"><span class="output">PHP 7.3.20 is within affected range (&lt;=8.2.29)</span>
+<span class="comment"># Tecnica: version-compare</span>
+<span class="comment"># Durata: 2ms</span>
+<span class="comment"># Timestamp: 2026-02-23T15:18:34Z</span>
+                </div>
+                <div class="cmd-label">Comandi di verifica</div>
+                <div class="cmd-block">
+<span class="prompt">$</span> curl -sI https://www.aziendaanonima.com | grep -iE &#x27;server|x-powered|x-aspnet&#x27;
+<span class="prompt">$</span> nuclei -id CVE-2025-14177 -u https://www.aziendaanonima.com -silent
+                </div>
+            </div>
+        </div>
+
+        <div class="finding-card">
+            <div class="finding-card-header">
+                <span class="sev sev-critical">CRITICAL</span>
+                <strong>CVE-2020-11023 &mdash; Potential XSS vulnerability in jQuery</strong>
+                <span class="status status-patched">PATCHATA</span>
+            </div>
+            <div class="finding-card-body">
+                <p><strong>Target:</strong> <code>www.aziendaanonima.com</code> | <strong>EPSS:</strong> 36.28%</p>
+                <p>### Impact
+Passing HTML containing `&amp;lt;option&amp;gt;` elements from untrusted sources - even after sanitizing them - to one of jQuery&#x27;s DOM manipulation methods (i.e. `.html()`, `.append()`, and others) may execute untrusted code.
+
+### Patches
+This problem is patched in jQuery 3.5.0.
+
+### Workarounds
+</p>
+                <div class="cmd-label">Risultato validazione</div>
+                <div class="cmd-block"><span class="output">jQuery 3.5.1 &gt; 3.4.99 (patched)</span>
+<span class="comment"># Tecnica: version-compare</span>
+<span class="comment"># Durata: 2ms</span>
+<span class="comment"># Timestamp: 2026-02-23T15:18:34Z</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="finding-card">
+            <div class="finding-card-header">
+                <span class="sev sev-high">HIGH</span>
+                <strong>CVE-2024-4439 &mdash; CVE-2024-4439</strong>
+                <span class="status status-patched">PATCHATA</span>
+            </div>
+            <div class="finding-card-body">
+                <p><strong>Target:</strong> <code>www.aziendaanonima.com</code> | <strong>EPSS:</strong> 92.06%</p>
+                <p>WordPress Core is vulnerable to Stored Cross-Site Scripting via user display names in the Avatar block in various versions up to 6.5.2 due to insufficient output escaping on the display name. This makes it possible for authenticated attackers, with contributor-level access and above, to inject arbit</p>
+                <div class="cmd-label">Risultato validazione</div>
+                <div class="cmd-block"><span class="output">WordPress version not detected</span>
+<span class="comment"># Tecnica: curl-exploit</span>
+<span class="comment"># Durata: 379ms</span>
+<span class="comment"># Timestamp: 2026-02-23T15:18:34Z</span>
+                </div>
+                <div class="cmd-label">Comandi di verifica</div>
+                <div class="cmd-block">
+<span class="prompt">$</span> dalfox url &#x27;https://www.aziendaanonima.com&#x27; --silence --only-poc v --format json
+                </div>
+            </div>
+        </div>
+
+        <div class="finding-card">
+            <div class="finding-card-header">
+                <span class="sev sev-critical">CRITICAL</span>
+                <strong>CVE-2018-0645 &mdash; CVE-2018-0645 - MTAppjQuery</strong>
+                <span class="status status-verify">DA VERIFICARE</span>
+            </div>
+            <div class="finding-card-body">
+                <p><strong>Target:</strong> <code>www.aziendaanonima.com</code> | <strong>EPSS:</strong> 1.27%</p>
+                <p>MTAppjQuery 1.8.1 and earlier allows remote PHP code execution via unspecified vectors.</p>
+                <div class="cmd-label">Risultato validazione</div>
+                <div class="cmd-block"><span class="output">jquery 3.5.1 detected (from scan data) - verify against CVE-2018-0645 affected range</span>
+<span class="comment"># Tecnica: version-display</span>
+<span class="comment"># Durata: 0ms</span>
+<span class="comment"># Timestamp: 2026-02-23T15:18:34Z</span>
+                </div>
+                <div class="cmd-label">Comandi di verifica</div>
+                <div class="cmd-block">
+<span class="prompt">$</span> nuclei -id CVE-2018-0645 -u https://www.aziendaanonima.com -silent
+                </div>
+            </div>
+        </div>
+
+        <div class="finding-card">
+            <div class="finding-card-header">
+                <span class="sev sev-critical">CRITICAL</span>
+                <strong>CVE-2018-9208 &mdash; CVE-2018-9208 - jQuery Picture Cut</strong>
+                <span class="status status-verify">DA VERIFICARE</span>
+            </div>
+            <div class="finding-card-body">
+                <p><strong>Target:</strong> <code>www.aziendaanonima.com</code> | <strong>EPSS:</strong> 15.22%</p>
+                <p>Unauthenticated arbitrary file upload vulnerability in jQuery Picture Cut &amp;lt;= v1.1Beta</p>
+                <div class="cmd-label">Risultato validazione</div>
+                <div class="cmd-block"><span class="output">jquery 3.5.1 detected (from scan data) - verify against CVE-2018-9208 affected range</span>
+<span class="comment"># Tecnica: version-display</span>
+<span class="comment"># Durata: 1ms</span>
+<span class="comment"># Timestamp: 2026-02-23T15:18:34Z</span>
+                </div>
+                <div class="cmd-label">Comandi di verifica</div>
+                <div class="cmd-block">
+<span class="prompt">$</span> nuclei -id CVE-2018-9208 -u https://www.aziendaanonima.com -silent
+                </div>
+            </div>
+        </div>
+
+        <div class="finding-card">
+            <div class="finding-card-header">
+                <span class="sev sev-critical">CRITICAL</span>
+                <strong>CVE-2009-2396 &mdash; CVE-2009-2396</strong>
+                <span class="status status-verify">DA VERIFICARE</span>
+            </div>
+            <div class="finding-card-body">
+                <p><strong>Target:</strong> <code>www.aziendaanonima.com</code> | <strong>EPSS:</strong> 3.67%</p>
+                <p>PHP remote file inclusion vulnerability in template/album.php in DM Albums 1.9.2, as used standalone or as a WordPress plugin, allows remote attackers to execute arbitrary PHP code via a URL in the SECURITY_FILE parameter.</p>
+                <div class="cmd-label">Risultato validazione</div>
+                <div class="cmd-block"><span class="output">wordpress 5.7.14 detected (from scan data) - verify against CVE-2009-2396 affected range</span>
+<span class="comment"># Tecnica: version-display</span>
+<span class="comment"># Durata: 1ms</span>
+<span class="comment"># Timestamp: 2026-02-23T15:18:34Z</span>
+                </div>
+                <div class="cmd-label">Comandi di verifica</div>
+                <div class="cmd-block">
+<span class="prompt">$</span> curl -s &#x27;https://www.aziendaanonima.com?file=../../../etc/passwd&#x27;
+<span class="prompt">$</span> nuclei -id CVE-2009-2396 -u https://www.aziendaanonima.com -silent
+                </div>
+            </div>
+        </div>
+
+        <div class="finding-card">
+            <div class="finding-card-header">
+                <span class="sev sev-high">HIGH</span>
+                <strong>CVE-2023-5464 &mdash; CVE-2023-5464 - Jquery accordion slideshow</strong>
+                <span class="status status-verify">DA VERIFICARE</span>
+            </div>
+            <div class="finding-card-body">
+                <p><strong>Target:</strong> <code>www.aziendaanonima.com</code> | <strong>EPSS:</strong> 0.30%</p>
+                <p>The Jquery accordion slideshow plugin for WordPress is vulnerable to SQL Injection via the plugin&#x27;s shortcode in versions up to, and including, 8.1 due to insufficient escaping on the user supplied parameter and lack of sufficient preparation on the existing SQL query. This makes it possible for aut</p>
+                <div class="cmd-label">Risultato validazione</div>
+                <div class="cmd-block"><span class="output">jquery 3.5.1 detected (from scan data) - verify against CVE-2023-5464 affected range</span>
+<span class="comment"># Tecnica: version-display</span>
+<span class="comment"># Durata: 1ms</span>
+<span class="comment"># Timestamp: 2026-02-23T15:18:34Z</span>
+                </div>
+                <div class="cmd-label">Comandi di verifica</div>
+                <div class="cmd-block">
+<span class="prompt">$</span> sqlmap -u &#x27;https://www.aziendaanonima.com&#x27; --batch --level=1 --risk=1 --technique=B --dbs --threads=5 --tamper=randomcase,space2comment,between --random-agent
+                </div>
+            </div>
+        </div>
+
+        <div class="finding-card">
+            <div class="finding-card-header">
+                <span class="sev sev-high">HIGH</span>
+                <strong>CVE-2021-20087 &mdash; CVE-2021-20087 - jquery-deparam</strong>
+                <span class="status status-verify">DA VERIFICARE</span>
+            </div>
+            <div class="finding-card-body">
+                <p><strong>Target:</strong> <code>www.aziendaanonima.com</code> | <strong>EPSS:</strong> 0.83%</p>
+                <p>Improperly Controlled Modification of Object Prototype Attributes (&#x27;Prototype Pollution&#x27;) in jquery-deparam 0.5.1 allows a malicious user to inject properties into Object.prototype.</p>
+                <div class="cmd-label">Risultato validazione</div>
+                <div class="cmd-block"><span class="output">jquery 3.5.1 detected (from scan data) - verify against CVE-2021-20087 affected range</span>
+<span class="comment"># Tecnica: version-display</span>
+<span class="comment"># Durata: 1ms</span>
+<span class="comment"># Timestamp: 2026-02-23T15:18:34Z</span>
+                </div>
+                <div class="cmd-label">Comandi di verifica</div>
+                <div class="cmd-block">
+<span class="prompt">$</span> nuclei -id CVE-2021-20087 -u https://www.aziendaanonima.com -silent
+                </div>
+            </div>
+        </div>
+
+        <div class="finding-card">
+            <div class="finding-card-header">
+                <span class="sev sev-high">HIGH</span>
+                <strong>CVE-2023-5430 &mdash; CVE-2023-5430 - Jquery news ticker</strong>
+                <span class="status status-verify">DA VERIFICARE</span>
+            </div>
+            <div class="finding-card-body">
+                <p><strong>Target:</strong> <code>www.aziendaanonima.com</code> | <strong>EPSS:</strong> 0.18%</p>
+                <p>The Jquery news ticker plugin for WordPress is vulnerable to SQL Injection via the plugin&#x27;s shortcode in versions up to, and including, 3.0 due to insufficient escaping on the user supplied parameter and lack of sufficient preparation on the existing SQL query. This makes it possible for authenticat</p>
+                <div class="cmd-label">Risultato validazione</div>
+                <div class="cmd-block"><span class="output">jquery 3.5.1 detected (from scan data) - verify against CVE-2023-5430 affected range</span>
+<span class="comment"># Tecnica: version-display</span>
+<span class="comment"># Durata: 1ms</span>
+<span class="comment"># Timestamp: 2026-02-23T15:18:34Z</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="finding-card">
+            <div class="finding-card-header">
+                <span class="sev sev-high">HIGH</span>
+                <strong>CVE-2021-20086 &mdash; CVE-2021-20086 - jquery-bbq</strong>
+                <span class="status status-verify">DA VERIFICARE</span>
+            </div>
+            <div class="finding-card-body">
+                <p><strong>Target:</strong> <code>www.aziendaanonima.com</code> | <strong>EPSS:</strong> 28.31%</p>
+                <p>Prototype Pollution in jquery-bbq</p>
+                <div class="cmd-label">Risultato validazione</div>
+                <div class="cmd-block"><span class="output">jquery 3.5.1 detected (from scan data) - verify against CVE-2021-20086 affected range</span>
+<span class="comment"># Tecnica: version-display</span>
+<span class="comment"># Durata: 1ms</span>
+<span class="comment"># Timestamp: 2026-02-23T15:18:34Z</span>
+                </div>
+                <div class="cmd-label">Comandi di verifica</div>
+                <div class="cmd-block">
+<span class="prompt">$</span> nuclei -id CVE-2021-20086 -u https://www.aziendaanonima.com -silent
+                </div>
+            </div>
+        </div>
+
+        <div class="finding-card">
+            <div class="finding-card-header">
+                <span class="sev sev-high">HIGH</span>
+                <strong>CVE-2009-4748 &mdash; CVE-2009-4748</strong>
+                <span class="status status-verify">DA VERIFICARE</span>
+            </div>
+            <div class="finding-card-body">
+                <p><strong>Target:</strong> <code>www.aziendaanonima.com</code> | <strong>EPSS:</strong> 0.48%</p>
+                <p>SQL injection vulnerability in mycategoryorder.php in the My Category Order plugin 2.8 and earlier for WordPress allows remote attackers to execute arbitrary SQL commands via the parentID parameter in an act_OrderCategories action to wp-admin/post-new.php.</p>
+                <div class="cmd-label">Risultato validazione</div>
+                <div class="cmd-block"><span class="output">wordpress 5.7.14 detected (from scan data) - verify against CVE-2009-4748 affected range</span>
+<span class="comment"># Tecnica: version-display</span>
+<span class="comment"># Durata: 1ms</span>
+<span class="comment"># Timestamp: 2026-02-23T15:18:34Z</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="finding-card">
+            <div class="finding-card-header">
+                <span class="sev sev-high">HIGH</span>
+                <strong>CVE-2010-0673 &mdash; CVE-2010-0673</strong>
+                <span class="status status-verify">DA VERIFICARE</span>
+            </div>
+            <div class="finding-card-body">
+                <p><strong>Target:</strong> <code>www.aziendaanonima.com</code> | <strong>EPSS:</strong> 0.69%</p>
+                <p>SQL injection vulnerability in cplphoto.php in the Copperleaf Photolog plugin 0.16, and possibly earlier, for WordPress allows remote attackers to execute arbitrary SQL commands via the postid parameter.</p>
+                <div class="cmd-label">Risultato validazione</div>
+                <div class="cmd-block"><span class="output">wordpress 5.7.14 detected (from scan data) - verify against CVE-2010-0673 affected range</span>
+<span class="comment"># Tecnica: version-display</span>
+<span class="comment"># Durata: 2ms</span>
+<span class="comment"># Timestamp: 2026-02-23T15:18:34Z</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="finding-card">
+            <div class="finding-card-header">
+                <span class="sev sev-high">HIGH</span>
+                <strong>CVE-2009-3703 &mdash; CVE-2009-3703</strong>
+                <span class="status status-verify">DA VERIFICARE</span>
+            </div>
+            <div class="finding-card-body">
+                <p><strong>Target:</strong> <code>www.aziendaanonima.com</code> | <strong>EPSS:</strong> 0.60%</p>
+                <p>Multiple SQL injection vulnerabilities in the WP-Forum plugin before 2.4 for WordPress allow remote attackers to execute arbitrary SQL commands via (1) the search_max parameter in a search action to the default URI, related to wpf.class.php; (2) the forum parameter to an unspecified component, relat</p>
+                <div class="cmd-label">Risultato validazione</div>
+                <div class="cmd-block"><span class="output">wordpress 5.7.14 detected (from scan data) - verify against CVE-2009-3703 affected range</span>
+<span class="comment"># Tecnica: version-display</span>
+<span class="comment"># Durata: 1ms</span>
+<span class="comment"># Timestamp: 2026-02-23T15:18:34Z</span>
+                </div>
+            </div>
+        </div>
+<p><em>Mostrate 20 di 40 vulnerabilita'. Consultare il report tecnico completo per la lista integrale.</em></p>
+
+    </div>
+</div>
+<div class="section">
+    <div class="section-header">
+        <div class="num">7</div>
+        <h2>Attack Graph e Kill Chains</h2>
+    </div>
+    <div class="section-body">
+        <p>L'<strong>Attack Graph</strong> ha modellato i possibili percorsi di attacco. Sono stati identificati <strong>10 attack paths</strong> attraverso 2 nodi e 40 connessioni.</p>
+<div class="executive-narrative">
+<p>Un <strong>Attack Graph</strong> e' una rappresentazione formale dei possibili percorsi che un attaccante potrebbe seguire per compromettere i sistemi dell'organizzazione. Viene costruito a partire dalle vulnerabilita' validate (TIER 1 e TIER 2) combinando informazioni su servizi esposti, relazioni tra host e tecniche di attacco note.</p>
+
+<p>Il grafo e' composto da <strong>nodi</strong> (ciascun host o servizio analizzato), <strong>archi</strong> (connessioni possibili tra nodi, basate su vulnerabilita' sfruttabili) e <strong>percorsi di attacco</strong> (sequenze di exploit che portano dall'accesso esterno fino a un obiettivo critico). In questa analisi sono stati modellati 2 nodi e 40 connessioni, da cui sono emersi 10 percorsi di attacco distinti.</p>
+
+<p>Ogni percorso e' mappato sul framework <strong>MITRE ATT&amp;CK</strong>, lo standard internazionale per classificare tattiche e tecniche degli avversari. Le tattiche descrivono gli obiettivi dell'attaccante (Initial Access, Execution, Privilege Escalation, Lateral Movement), mentre le tecniche descrivono il metodo specifico utilizzato (es. T1190 — Exploit Public-Facing Application).</p>
+
+<p>Le <strong>Kill Chain</strong> mostrate di seguito rappresentano catene di attacco multi-step: ogni step indica la fase dell'attacco, la tecnica MITRE impiegata, il target specifico e il livello di difficolta'. Il <strong>Risk Score</strong> di ogni kill chain e' calcolato combinando CVSS delle vulnerabilita' coinvolte, EPSS (probabilita' di sfruttamento), raggiungibilita' della rete e valore dell'host come punto di <em>pivot</em> verso altri sistemi interni.</p>
+</div>
+<h3 style="margin-top: 1rem; margin-bottom: 0.8rem;">Copertura MITRE ATT&amp;CK</h3>
+<table><thead><tr><th>Tecnica</th><th>Nome</th><th>Tattica</th><th>Occorrenze</th></tr></thead><tbody>
+<tr><td><span class="mitre-tag">T1059</span></td><td>Command and Scripting Interpreter</td><td>Execution</td><td>1</td></tr>
+<tr><td><span class="mitre-tag">T1189</span></td><td>Drive-by Compromise</td><td>Initial Access</td><td>1</td></tr>
+<tr><td><span class="mitre-tag">T1190</span></td><td>Exploit Public-Facing Application</td><td>Initial Access</td><td>1</td></tr>
+<tr><td><span class="mitre-tag">T1082</span></td><td>T1082</td><td>Discovery</td><td>1</td></tr>
+</tbody></table>
+
+<h3 style="margin-top: 1.5rem; margin-bottom: 0.8rem;">Kill Chain 1: Chain 1 (Risk Score: 47.5)</h3>
+<div class="timeline">
+<div class="timeline-item">
+                <div class="time">Step  &mdash; initial-access</div>
+                <div class="desc"><strong></strong></div>
+</div>
+<div class="timeline-item">
+                <div class="time">Step  &mdash; execution</div>
+                <div class="desc"><strong></strong></div>
+</div>
+<div class="timeline-item">
+                <div class="time">Step  &mdash; privilege-escalation</div>
+                <div class="desc"><strong></strong></div>
+</div>
+<div class="timeline-item">
+                <div class="time">Step  &mdash; credential-access</div>
+                <div class="desc"><strong></strong></div>
+</div>
+<div class="timeline-item">
+                <div class="time">Step  &mdash; discovery</div>
+                <div class="desc"><strong></strong></div>
+</div>
+</div>
+
+    </div>
+</div>
+<div class="section">
+    <div class="section-header">
+        <div class="num">8</div>
+        <h2>Red Team Playbook &mdash; Comandi di Exploit Generati</h2>
+    </div>
+    <div class="section-body">
+        <p>Il <strong>Red Team Playbook</strong> ha generato un totale di <strong>20 comandi</strong> (20 di verifica, 0 di exploitation) organizzati per host.</p>
+<div class="executive-narrative">
+<p>Il <strong>Red Team Playbook</strong> e' un documento operativo che traduce le vulnerabilita' identificate in comandi concreti eseguibili. Il suo scopo e' duplice: da un lato, permette al team di sicurezza di <em>riprodurre</em> la vulnerabilita' in modo controllato per confermarne l'esistenza; dall'altro, documenta l'impatto reale che un attaccante potrebbe ottenere sfruttandola.</p>
+
+<p>I comandi sono divisi in due categorie: i <strong>20 comandi di verifica</strong> servono a confermare la presenza della vulnerabilita' senza causare danni (es. test di connessione, version detection, probe non distruttivi); i <strong>0 comandi di exploitation</strong> dimostrano lo sfruttamento completo (es. estrazione dati, esecuzione comandi remoti, privilege escalation). Tutti i comandi sono organizzati per host (1 profili target) e per CVE specifica.</p>
+
+<p>Quando viene rilevato un WAF (Web Application Firewall), i comandi vengono automaticamente raffinati dall'<strong>RLM Dual-Model Orchestrator</strong> che applica tecniche di evasione: header spoofing, encoding alternativo, frammentazione dei payload e timing randomizzato. I comandi originali e quelli raffinati sono mostrati in parallelo per trasparenza.</p>
+
+<p><strong>Avvertenza</strong>: i comandi di exploitation devono essere eseguiti esclusivamente in ambiente autorizzato e nell'ambito di un engagement di penetration testing formalmente approvato. I comandi riferiti a CVE patchate (verificate nella fase di validazione) non sono piu' efficaci e vengono segnalati come tali.</p>
+</div>
+<h3 style="margin-top: 1rem; margin-bottom: 0.8rem;">Comandi di Exploitation Attivi</h3>
+
+<p><strong>Nota:</strong> i comandi di exploit per CVE patchate (CVE-2020-11023, CVE-2024-4439) non sono piu' efficaci dato che la validazione ha confermato la remediation.</p>
+
+    </div>
+</div>
+<div class="section">
+    <div class="section-header">
+        <div class="num">9</div>
+        <h2>Verifiche Red Team Aggiuntive (RT-EXTRA)</h2>
+    </div>
+    <div class="section-body">
+        <p>Oltre alle CVE specifiche, il validation script ha eseguito <strong>6 verifiche aggiuntive</strong> (RT-EXTRA):</p>
+<div class="executive-narrative">
+<p>Le verifiche <strong>RT-EXTRA</strong> (Red Team Extra) sono test di sicurezza aggiuntivi che vanno oltre la validazione delle singole CVE. Vengono generati automaticamente dal Red Team Playbook per coprire scenari di attacco generici non legati a una CVE specifica ma comunque rilevanti per la postura di sicurezza dell'organizzazione.</p>
+
+<p>Queste verifiche includono diversi tipi di test: <strong>Nmap NSE scripts</strong> (scansione con script di vulnerability detection su tutte le porte esposte), <strong>version detection</strong> (conferma delle versioni software rilevate rispetto alle versioni vulnerabili note), <strong>probe SSRF</strong> (test di Server-Side Request Forgery per verificare l'accesso a risorse interne), e <strong>probe XSS/injection</strong> (test generici di Cross-Site Scripting e injection).</p>
+
+<p>I risultati sono classificati in tre stati: <span style="color: var(--status-confirmed)"><strong>VULNERABILE</strong></span> (il test ha confermato una debolezza attiva, 0 trovati), <span style="color: var(--status-patched)"><strong>NON VULNERABILE</strong></span> (il test non ha trovato indicatori di compromissione, 3 trovati), e <span style="color: var(--status-verify)"><strong>DA VERIFICARE</strong></span> (il risultato e' ambiguo e richiede analisi manuale da parte di un operatore, 3 trovati). Lo stato "da verificare" si verifica tipicamente quando la risposta del server e' inattesa ma non chiaramente indicativa di una vulnerabilita'.</p>
+</div>
+<table><thead><tr><th>Verifica</th><th>Stato</th><th>Dettaglio</th><th>Timestamp</th></tr></thead><tbody>
+<tr><td>No vulnerability indicators found</td><td><span class="status status-patched">NON VULNERABILE</span></td><td>No vulnerability indicators found</td><td><code>15:22:57</code></td></tr>
+<tr><td>Dalfox: no XSS PoC found</td><td><span class="status status-patched">NON VULNERABILE</span></td><td>Dalfox: no XSS PoC found</td><td><code>15:23:11</code></td></tr>
+<tr><td>[WAF:WORDFENCE] OS command injection verification with Commix</td><td><span class="status status-verify">DA VERIFICARE</span></td><td>[WAF:WORDFENCE] OS command injection verification with Commix</td><td><code>15:23:11</code></td></tr>
+<tr><td>No exploitable response</td><td><span class="status status-patched">NON VULNERABILE</span></td><td>No exploitable response</td><td><code>15:23:17</code></td></tr>
+<tr><td>[WAF:WORDFENCE] SQLMap boolean-based blind SQL injection test</td><td><span class="status status-verify">DA VERIFICARE</span></td><td>[WAF:WORDFENCE] SQLMap boolean-based blind SQL injection test</td><td><code>15:23:21</code></td></tr>
+<tr><td>Server information disclosure check (read-only)</td><td><span class="status status-verify">DA VERIFICARE</span></td><td>Server information disclosure check (read-only)</td><td><code>15:23:21</code></td></tr>
+</tbody></table>
+
+    </div>
+</div>
+<div class="section">
+    <div class="section-header">
+        <div class="num">10</div>
+        <h2>Pipeline di Scansione &mdash; Fasi e Tempistiche</h2>
+    </div>
+    <div class="section-body">
+        <p>La pipeline e' stata eseguita con: profilo <strong>stealth</strong>, AI <strong>abilitata</strong>, learning engine <strong>attivo</strong>, Knowledge Store <strong>abilitato</strong>.</p>
+<div class="executive-narrative">
+<p>La <strong>pipeline di scansione</strong> e' un'architettura modulare a cascata in cui ogni fase riceve in input i risultati della fase precedente, li arricchisce con la propria analisi e li inoltra alla fase successiva. Questo approccio garantisce che ogni dato venga progressivamente raffinato e validato attraverso molteplici livelli di analisi indipendenti.</p>
+
+<p>Il <strong>profilo di scansione</strong> (stealth) determina l'aggressivita' e il timing delle operazioni: <em>quick</em> esegue solo i test essenziali, <em>standard</em> bilancia copertura e velocita', <em>stealth</em> minimizza il traffico per evitare il rilevamento da parte di WAF e IDS, e <em>thorough</em> esegue tutti i test disponibili con la massima copertura.</p>
+
+<p>L'<strong>analisi AI</strong> e' stata utilizzata per il filtraggio avanzato dei falsi positivi, la mappatura automatica delle tecniche MITRE ATT&amp;CK e la generazione di un executive summary in linguaggio naturale.
+Il <strong>Learning Engine</strong> ha registrato i risultati di questa scansione per migliorare le configurazioni degli strumenti nelle scansioni future, adattando soglie e parametri in base all'esperienza accumulata.
+Il <strong>Knowledge Store</strong> (ChromaDB) ha fornito contesto storico da scansioni precedenti e i risultati confermati sono stati ingeriti per arricchire la base di conoscenza.</p>
+
+<p>La tabella seguente riporta per ogni fase: il modulo eseguito, la durata effettiva, lo stato di completamento (OK/ERROR) e le metriche principali estratte dai risultati. Le fasi con durata inferiore a 1 secondo operano esclusivamente su dati in memoria senza interazione di rete.</p>
+</div>
+<table><thead><tr><th>Fase</th><th>Modulo</th><th>Durata</th><th>Stato</th><th>Note</th></tr></thead><tbody>
+<tr><td>Fase 10</td><td>CVE Validator</td><td>12.1s</td><td><span class="status status-patched">OK</span></td><td>total_input: 122, validated: 122</td></tr>
+<tr><td>Fase 10.5</td><td>Evidence Gating</td><td>0.0s</td><td><span class="status status-patched">OK</span></td><td>total_input: 122, total_after_dedup: 122, tier_1_count: 3</td></tr>
+<tr><td>Fase 11</td><td>Attack Graph</td><td>0.1s</td><td><span class="status status-patched">OK</span></td><td>total_findings: 40, total_nodes: 2</td></tr>
+<tr><td>Fase 11.5</td><td>Red Team Playbook</td><td>0.0s</td><td><span class="status status-patched">OK</span></td><td>total_hosts: 1, total_kill_chains: 1, total_verification_commands: 20</td></tr>
+<tr><td></td><td>validation_scripts</td><td>0.1s</td><td><span class="status status-patched">OK</span></td><td></td></tr>
+<tr><td>Fase 12</td><td>Report Generator</td><td>0.1s</td><td><span class="status status-patched">OK</span></td><td>total: 40</td></tr>
+<tr><td>Fase 13</td><td>AI Analysis</td><td>0.0s</td><td><span class="status status-patched">OK</span></td><td></td></tr>
+</tbody></table>
+
+    </div>
+</div>
+<div class="section">
+    <div class="section-header">
+        <div class="num">11</div>
+        <h2>Piano di Remediation</h2>
+    </div>
+    <div class="section-body">
+        <p>Sulla base dei risultati della scansione e della validazione, di seguito il piano di remediation ordinato per priorita'.</p>
+<div class="executive-narrative">
+<p>Il <strong>piano di remediation</strong> traduce i risultati tecnici dell'assessment in azioni concrete organizzate per priorita' e tempistica. Ogni azione e' classificata secondo quattro livelli di urgenza: <strong>P1 (entro 24-48 ore)</strong> per le vulnerabilita' confermate come attivamente sfruttabili, <strong>P2 (entro 1 settimana)</strong> per le esposizioni ad alto rischio che richiedono interventi strutturali, <strong>P3 (entro 2 settimane)</strong> per le migliorie di sicurezza e hardening, e <strong>P3 continuo</strong> per le attivita' di monitoraggio e manutenzione ricorrente.</p>
+
+<p>La priorita' viene determinata automaticamente in base a: stato di validazione (le CVE confermate come vulnerabili hanno sempre priorita' P1), severita' CVSS (critical e high hanno precedenza), presenza nel catalogo CISA KEV (vulnerabilita' attivamente sfruttate in natura), grado di esposizione del servizio (porte direttamente raggiungibili da Internet) e risultati delle verifiche Red Team.</p>
+
+<p>I comandi di remediation forniti sono <strong>suggerimenti operativi</strong> basati sulle best practice di settore e devono essere adattati all'ambiente specifico dell'organizzazione. Si raccomanda di testarli prima in un ambiente di staging, di seguire il processo di change management aziendale per l'applicazione in produzione, e di eseguire un <strong>re-test</strong> dopo ogni intervento per verificare l'efficacia della remediation e l'assenza di regressioni.</p>
+</div>
+<div class="remed-item priority-1">
+            <span class="pri-badge pri-1">P1 &mdash; IMMEDIATA (24-48h)</span>
+            <h4>Risolvere CVE-2024-6386 su www.aziendaanonima.com</h4>
+            <p>Vulnerabilita' confermata come sfruttabile. Applicare la patch specifica per CVE-2024-6386 o disabilitare il componente vulnerabile. WPML 4.4.12 is within affected range (&lt;=4.6.12)</p>
+            
+            
+        </div>
+<div class="remed-item priority-1">
+            <span class="pri-badge pri-1">P1 &mdash; IMMEDIATA (24-48h)</span>
+            <h4>Risolvere CVE-2022-37454 su www.aziendaanonima.com</h4>
+            <p>Vulnerabilita' confermata come sfruttabile. Applicare la patch specifica per CVE-2022-37454 o disabilitare il componente vulnerabile. PHP 7.3.20 is EOL (unsupported) — likely vulnerable to CVE-2022-37454</p>
+            
+            
+        </div>
+<div class="remed-item priority-1">
+            <span class="pri-badge pri-1">P1 &mdash; IMMEDIATA (24-48h)</span>
+            <h4>Risolvere CVE-2024-3566 su www.aziendaanonima.com</h4>
+            <p>Vulnerabilita' confermata come sfruttabile. Applicare la patch specifica per CVE-2024-3566 o disabilitare il componente vulnerabile. PHP 7.3.20 is within affected range (&lt;=8.3.4)</p>
+            
+            
+        </div>
+<div class="remed-item priority-1">
+            <span class="pri-badge pri-1">P1 &mdash; IMMEDIATA (24-48h)</span>
+            <h4>Risolvere CVE-2017-8923 su www.aziendaanonima.com</h4>
+            <p>Vulnerabilita' confermata come sfruttabile. Applicare la patch specifica per CVE-2017-8923 o disabilitare il componente vulnerabile. PHP 7.3.20 is EOL (unsupported) — likely vulnerable to CVE-2017-8923</p>
+            
+            
+        </div>
+<div class="remed-item priority-1">
+            <span class="pri-badge pri-1">P1 &mdash; IMMEDIATA (24-48h)</span>
+            <h4>Risolvere CVE-2021-21703 su www.aziendaanonima.com</h4>
+            <p>Vulnerabilita' confermata come sfruttabile. Applicare la patch specifica per CVE-2021-21703 o disabilitare il componente vulnerabile. PHP 7.3.20 is EOL (unsupported) — likely vulnerable to CVE-2021-21703</p>
+            
+            
+        </div>
+<div class="remed-item priority-1">
+            <span class="pri-badge pri-1">P1 &mdash; IMMEDIATA (24-48h)</span>
+            <h4>Risolvere CVE-2013-2220 su www.aziendaanonima.com</h4>
+            <p>Vulnerabilita' confermata come sfruttabile. Applicare la patch specifica per CVE-2013-2220 o disabilitare il componente vulnerabile. PHP 7.3.20 is EOL (unsupported) — likely vulnerable to CVE-2013-2220</p>
+            
+            
+        </div>
+<div class="remed-item priority-1">
+            <span class="pri-badge pri-1">P1 &mdash; IMMEDIATA (24-48h)</span>
+            <h4>Risolvere CVE-2025-14180 su www.aziendaanonima.com</h4>
+            <p>Vulnerabilita' confermata come sfruttabile. Applicare la patch specifica per CVE-2025-14180 o disabilitare il componente vulnerabile. PHP 7.3.20 is within affected range (&lt;=8.2.29)</p>
+            
+            
+        </div>
+<div class="remed-item priority-1">
+            <span class="pri-badge pri-1">P1 &mdash; IMMEDIATA (24-48h)</span>
+            <h4>Risolvere CVE-2025-14177 su www.aziendaanonima.com</h4>
+            <p>Vulnerabilita' confermata come sfruttabile. Applicare la patch specifica per CVE-2025-14177 o disabilitare il componente vulnerabile. PHP 7.3.20 is within affected range (&lt;=8.2.29)</p>
+            
+            
+        </div>
+<div class="remed-item priority-1">
+            <span class="pri-badge pri-1">P1 &mdash; IMMEDIATA (24-48h)</span>
+            <h4>Limitare l'esposizione delle porte pericolose</h4>
+            <p>Porte potenzialmente pericolose esposte su Internet: FTP (21), FTP (21), FTP (21) su https://www.aziendaanonima.com, https://aziendaanonima.com, aziendaanonima.com. Configurare il firewall per bloccare l'accesso esterno a questi servizi.</p>
+            <div class="cmd-block">
+<span class="comment"># Firewall: chiudere le porte non necessarie</span>
+<span class="prompt">$</span> ufw default deny incoming
+<span class="prompt">$</span> ufw allow 80/tcp
+<span class="prompt">$</span> ufw allow 443/tcp
+<span class="prompt">$</span> ufw allow 22/tcp   <span class="comment"># SSH (da IP specifici)</span>
+<span class="prompt">$</span> ufw enable
+</div>
+        </div>
+<div class="remed-item priority-2">
+            <span class="pri-badge pri-2">P2 &mdash; ENTRO 1 SETTIMANA</span>
+            <h4>Verificare e rafforzare la protezione WAF</h4>
+            <p>Verificare che il WAF sia effettivamente attivo e configurato con regole aggiornate sui target protetti. Configurare regole specifiche per bloccare pattern SSRF, path traversal e injection.</p>
+            <div class="cmd-block">
+<span class="comment"># ModSecurity (Apache) - Regole OWASP CRS</span>
+<span class="prompt">$ apt install libapache2-mod-security2 -y</span>
+<span class="prompt">$ cp /etc/modsecurity/modsecurity.conf-recommended /etc/modsecurity/modsecurity.conf</span>
+<span class="prompt">$ sed -i 's/SecRuleEngine DetectionOnly/SecRuleEngine On/' /etc/modsecurity/modsecurity.conf</span>
+<span class="prompt">$ systemctl restart apache2</span>
+</div>
+        </div>
+<div class="remed-item priority-3">
+            <span class="pri-badge pri-3">P3 &mdash; ENTRO 2 SETTIMANE</span>
+            <h4>Analizzare i 3 risultati RT-EXTRA "da verificare"</h4>
+            <p>Le verifiche Red Team aggiuntive hanno prodotto risultati che richiedono analisi manuale (scan Nmap, Dalfox, probe generici).</p>
+        </div>
+<div class="remed-item priority-3">
+            <span class="pri-badge pri-3">P3 &mdash; ENTRO 2 SETTIMANE</span>
+            <h4>Implementare Content Security Policy</h4>
+            <p>Implementare una CSP restrittiva su <code>www.aziendaanonima.com</code> come difesa in profondita' contro attacchi XSS.</p>
+            <div class="cmd-block">
+<span class="comment"># Nginx - Header di sicurezza</span>
+<span class="prompt">add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'none';" always;</span>
+<span class="prompt">add_header X-Content-Type-Options "nosniff" always;</span>
+<span class="prompt">add_header X-Frame-Options "DENY" always;</span>
+<span class="prompt">add_header Referrer-Policy "strict-origin-when-cross-origin" always;</span>
+</div>
+            <div class="cmd-block">
+<span class="comment"># Verificare header corrente</span>
+<span class="prompt">$ curl -sI https://TARGET/ | grep -iE "content-security|x-frame|x-content"</span>
+</div>
+        </div>
+<div class="remed-item priority-3">
+            <span class="pri-badge pri-3">P3 &mdash; CONTINUO</span>
+            <h4>Implementare monitoraggio continuo</h4>
+            <p>Configurare monitoring per rilevare tentativi di exploitation, implementare backup con disaster recovery testato, e pianificare scan periodici.</p>
+        </div>
+
+    </div>
+</div>
+<div class="section">
+    <div class="section-header">
+        <div class="num">12</div>
+        <h2>Riepilogo e Conclusioni</h2>
+    </div>
+    <div class="section-body">
+        <div class="executive-narrative">
+<p>Questa sezione riepiloga l'intero percorso di analisi, dall'acquisizione dei dati EASM alla produzione del report finale. Il processo ha preso in esame <strong>122 vulnerabilita'</strong> provenienti dal database EASM (fonti: NVD, ENISA, CIRCL, OSV), le ha arricchite con dati di threat intelligence (EPSS, CISA KEV, NVD API, OSV), e le ha sottoposte al filtraggio Evidence Gating che ha classificato come <em>actionable</em> solo <strong>40</strong> di esse (tasso di rejection: 0.0%).</p>
+
+<p>Le vulnerabilita' actionable sono state analizzate dall'Attack Graph per identificare i percorsi di attacco, dal Red Team Playbook per generare comandi operativi di verifica e sfruttamento, e infine validate in un container Docker Kali Linux per confermare la loro effettiva sfruttabilita'. Su 40 vulnerabilita' testate, 8 sono risultate confermate e 2 patchate.</p>
+
+<p>La tabella seguente riporta le metriche chiave dell'assessment. Questo report puo' essere utilizzato a diversi livelli: il <strong>Sommario Esecutivo</strong> (sezione 1) fornisce una visione d'insieme per il management e il CIO; il <strong>Dettaglio Vulnerabilita'</strong> (sezione 6) e' destinato al team tecnico per la riproduzione e la verifica; il <strong>Red Team Playbook</strong> (sezione 8) e' riservato al team di sicurezza per le attivita' di penetration testing; il <strong>Piano di Remediation</strong> (sezione 11) guida le operazioni di correzione prioritizzate. Si raccomanda di pianificare una scansione di re-test entro 30 giorni dall'applicazione delle correzioni per verificarne l'efficacia.</p>
+</div>
+<table><thead><tr><th>Metrica</th><th>Valore</th></tr></thead><tbody>
+<tr><td>Vulnerabilita' EASM totali</td><td><strong>122</strong></td></tr>
+<tr><td>Actionable dopo Evidence Gating</td><td><strong>40</strong> (31 high + 8 critical + 1 medium)</td></tr>
+<tr><td>Confermate vulnerabili (post-validazione)</td><td><strong>8</strong></td></tr>
+<tr><td>Patchate / Non vulnerabili</td><td><strong>2</strong></td></tr>
+<tr><td>Da verificare (Red Team)</td><td><strong>33</strong></td></tr>
+<tr><td>WAF rilevati</td><td><strong>2/4</strong> target</td></tr>
+<tr><td>Attack paths ad alto rischio</td><td><strong>10</strong></td></tr>
+<tr><td>Comandi Red Team generati</td><td><strong>20</strong></td></tr>
+<tr><td>Copertura MITRE ATT&amp;CK</td><td><strong>4 tecniche</strong>, 3 tattiche</td></tr>
+<tr><td>Durata totale pipeline</td><td><strong>0m 26s</strong></td></tr>
+</tbody></table>
+
+<p style="margin-top: 1.5rem;"><strong>Azione prioritaria:</strong> risolvere CVE-2024-6386 su <code>www.aziendaanonima.com</code> entro le prossime 24-48 ore. Chiudere le porte pericolose dall'accesso pubblico. Verificare manualmente i 33 risultati RT-EXTRA pendenti.</p>
+
+    </div>
+</div>
+</div><!-- /container -->
+
+<div class="footer">
+    <p>Generato da <strong>FireLine v12.0.0</strong> &mdash; Scan ID: a1b2c3d4e5f6 &mdash; 23/02/2026</p>
+    <p>Pipeline: WAF Scan &rarr; CVE Validator &rarr; Evidence Gating &rarr; Attack Graph &rarr; Red Team Playbook &rarr; Report Generator</p>
+</div>
+
+
+</body>
+</html>

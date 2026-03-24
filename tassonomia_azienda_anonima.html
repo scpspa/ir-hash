@@ -1,0 +1,1487 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FireLine - Tassonomia ACN - Azienda Anonima SRL - TC-ACN v2.0</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+:root {
+    --orizon-green: #4ac300;
+    --orizon-green-light: #6bef1a;
+    --orizon-green-dark: #3a9c00;
+    --bg-space-dark: #020617;
+    --bg-space-medium: #0f172a;
+    --bg-space-light: #1e293b;
+    --bc-color: #1e40af;
+    --bc-bg: #dbeafe;
+    --tt-color: #92400e;
+    --tt-bg: #fef3c7;
+    --ta-color: #9d174d;
+    --ta-bg: #fce7f3;
+    --ac-color: #065f46;
+    --ac-bg: #d1fae5;
+    --severity-critical: #dc2626;
+    --severity-high: #ea580c;
+    --severity-medium: #ca8a04;
+    --severity-low: #60a5fa;
+    --font-primary: 'Inter', 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: var(--font-primary);
+    background: #f1f5f9;
+    color: #334155;
+    line-height: 1.7;
+    font-size: 15px;
+}
+
+.cover {
+    background: linear-gradient(135deg, var(--bg-space-dark) 0%, var(--bg-space-medium) 50%, var(--bg-space-light) 100%);
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 3rem;
+    position: relative;
+    overflow: hidden;
+}
+.cover::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(ellipse at 30% 20%, rgba(74,195,0,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(107,239,26,0.05) 0%, transparent 50%);
+    animation: pulse 8s ease-in-out infinite alternate;
+}
+@keyframes pulse { 0% { opacity: 0.5; } 100% { opacity: 1; } }
+
+.cover h1 {
+    font-size: 2.8rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin-bottom: 0.5rem;
+    position: relative;
+}
+.cover h1 span { color: var(--orizon-green); }
+.cover .subtitle {
+    font-size: 1.3rem;
+    color: #94a3b8;
+    margin-bottom: 2rem;
+    position: relative;
+}
+.cover .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    max-width: 700px;
+    position: relative;
+}
+.cover .meta-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 1.2rem;
+}
+.cover .meta-card .label { font-size: 0.75rem; text-transform: uppercase; color: #64748b; letter-spacing: 1px; }
+.cover .meta-card .value { font-size: 1.1rem; font-weight: 700; color: #e2e8f0; margin-top: 0.3rem; }
+
+.cover-logo {
+    width: 280px;
+    margin-bottom: 1.5rem;
+    position: relative;
+    opacity: 0.95;
+}
+
+.cover .powered-by {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-top: 0.3rem;
+    position: relative;
+    letter-spacing: 1px;
+}
+
+.badge-tlp {
+    display: inline-block;
+    padding: 0.4rem 1.2rem;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-top: 2rem;
+    position: relative;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    background: #f59e0b;
+    color: #000;
+}
+
+.sibling-reports {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.2rem 1.5rem;
+    margin: 1.5rem 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    border-left: 4px solid var(--orizon-green);
+}
+.sibling-reports h3 { margin-top: 0; font-size: 1rem; color: #1e293b; }
+.sibling-reports ul { list-style: none; padding: 0; margin-top: 0.5rem; }
+.sibling-reports li { padding: 0.3rem 0; }
+.sibling-reports a {
+    color: var(--orizon-green-dark);
+    text-decoration: none;
+    font-weight: 500;
+}
+.sibling-reports a:hover { text-decoration: underline; }
+
+.footer-logo {
+    width: 36px;
+    height: 36px;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 0.4rem;
+}
+
+.legend {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.legend h2 { margin-top: 0; border: none; }
+.legend-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+}
+@media (max-width: 768px) { .legend-grid { grid-template-columns: 1fr; } }
+.legend-item {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding: 0.35rem 0.8rem;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.88rem;
+}
+.legend-item:hover { background: #f8fafc; }
+.legend-item .code { min-width: 120px; flex-shrink: 0; }
+.legend-item .desc { color: #475569; }
+.legend-macro {
+    grid-column: 1 / -1;
+    padding: 0.6rem 0.8rem 0.3rem;
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 2px solid #e2e8f0;
+    margin-top: 0.5rem;
+}
+.legend-macro.bc { color: var(--bc-color); border-color: var(--bc-color); }
+.legend-macro.tt { color: var(--tt-color); border-color: var(--tt-color); }
+.legend-macro.ta { color: var(--ta-color); border-color: var(--ta-color); }
+.legend-macro.ac { color: var(--ac-color); border-color: var(--ac-color); }
+
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+h2 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin: 2.5rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 3px solid;
+}
+h2.bc { border-color: var(--bc-color); color: var(--bc-color); }
+h2.tt { border-color: var(--tt-color); color: var(--tt-color); }
+h2.ta { border-color: var(--ta-color); color: var(--ta-color); }
+h2.ac { border-color: var(--ac-color); color: var(--ac-color); }
+
+h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 1.5rem 0 0.5rem;
+    color: #1e293b;
+}
+
+.section-intro {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.section-intro.bc { border-color: var(--bc-color); }
+.section-intro.tt { border-color: var(--tt-color); }
+.section-intro.ta { border-color: var(--ta-color); }
+.section-intro.ac { border-color: var(--ac-color); }
+
+.pred-desc {
+    font-size: 0.92em;
+    color: #475569;
+    margin: 0.3rem 0 1rem 0;
+    line-height: 1.6;
+    padding: 0.6rem 1rem;
+    background: #f8fafc;
+    border-radius: 6px;
+    border-left: 3px solid #94a3b8;
+}
+
+.tc-badge {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin: 0.1rem 0.2rem;
+    white-space: nowrap;
+}
+.tc-badge.bc { background: var(--bc-bg); color: var(--bc-color); }
+.tc-badge.tt { background: var(--tt-bg); color: var(--tt-color); }
+.tc-badge.ta { background: var(--ta-bg); color: var(--ta-color); }
+.tc-badge.ac { background: var(--ac-bg); color: var(--ac-color); }
+
+.badge-sev {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #fff;
+}
+.badge-sev.critical { background: var(--severity-critical); }
+.badge-sev.high { background: var(--severity-high); }
+.badge-sev.medium { background: var(--severity-medium); color: #000; }
+.badge-sev.low { background: var(--severity-low); }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+th {
+    background: #f8fafc;
+    text-align: left;
+    padding: 0.8rem 1rem;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748b;
+    border-bottom: 2px solid #e2e8f0;
+}
+td {
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.9rem;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover { background: #f8fafc; }
+
+.finding-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    border-left: 4px solid #94a3b8;
+}
+.finding-card.critical { border-left-color: var(--severity-critical); }
+.finding-card.high { border-left-color: var(--severity-high); }
+.finding-card.medium { border-left-color: var(--severity-medium); }
+.finding-card.low { border-left-color: var(--severity-low); }
+
+.finding-card h4 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.finding-card .meta { font-size: 0.85rem; color: #64748b; margin-bottom: 0.5rem; }
+.finding-card .codes { margin-top: 0.5rem; }
+.finding-card .confidence { font-size: 0.75rem; color: #94a3b8; margin-left: 0.3rem; }
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+.stat-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.2rem;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.stat-card .stat-value {
+    font-size: 2rem;
+    font-weight: 800;
+}
+.stat-card .stat-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #64748b;
+    margin-top: 0.3rem;
+}
+.stat-card.bc .stat-value { color: var(--bc-color); }
+.stat-card.tt .stat-value { color: var(--tt-color); }
+.stat-card.ta .stat-value { color: var(--ta-color); }
+.stat-card.ac .stat-value { color: var(--ac-color); }
+
+.freq-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.3rem 0;
+}
+.freq-bar .bar {
+    height: 20px;
+    border-radius: 4px;
+    min-width: 4px;
+    transition: width 0.3s;
+}
+.freq-bar .bar.bc { background: var(--bc-color); }
+.freq-bar .bar.tt { background: var(--tt-color); }
+.freq-bar .bar.ta { background: var(--ta-color); }
+.freq-bar .bar.ac { background: var(--ac-color); }
+
+.toc {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.toc h3 { margin-top: 0; }
+.toc ul { list-style: none; padding: 0; }
+.toc li { padding: 0.3rem 0; }
+.toc a { color: var(--orizon-green-dark); text-decoration: none; font-weight: 500; }
+.toc a:hover { text-decoration: underline; }
+
+footer {
+    text-align: center;
+    padding: 2rem;
+    color: #94a3b8;
+    font-size: 0.8rem;
+    border-top: 1px solid #e2e8f0;
+    margin-top: 3rem;
+}
+
+@media print {
+    .cover { min-height: auto; page-break-after: always; }
+    .container { max-width: 100%; }
+    .finding-card { page-break-inside: avoid; }
+}
+
+</style>
+</head>
+<body>
+<div class="cover">
+    <div class="cover-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1466.95 512"><defs><style>.ol{fill:#fff;stroke-width:0px;}</style></defs><path class="ol" d="m606.1,219.97h0c-12.41-6.4-26.52-9.65-41.94-9.65s-30.52,3.4-42.98,10.09c-12.55,6.75-22.54,16.35-29.68,28.55-7.13,12.17-10.74,25.36-10.74,39.2s3.62,27.63,10.77,39.51c7.15,11.88,17.26,21.34,30.04,28.11,12.69,6.72,26.95,10.13,42.4,10.13s29.94-3.35,42.49-9.97c12.65-6.67,22.75-16.18,30-28.27,7.25-12.08,10.92-25.37,10.92-39.51s-3.77-27.99-11.2-40.15c-7.43-12.15-17.54-21.59-30.06-28.05Zm-42.14,24.49c8.65,0,16.51,1.87,23.36,5.55,6.82,3.66,11.96,8.7,15.71,15.39,3.75,6.69,5.65,14.36,5.65,22.77,0,13.01-4.06,23.29-12.43,31.44-8.4,8.19-18.9,12.17-32.09,12.17-8.65,0-16.47-1.86-23.24-5.54-6.77-3.67-11.9-8.7-15.69-15.37-3.78-6.65-5.69-14.29-5.69-22.7s1.86-16.17,5.52-22.8c3.65-6.61,8.74-11.63,15.56-15.32,6.84-3.71,14.7-5.59,23.35-5.59Z"/><rect class="ol" x="835.71" y="210.33" width="37.88" height="155.46"/><polygon class="ol" points="911.6 210.33 911.6 242.97 984.19 242.97 901.9 365.79 1046.94 365.79 1046.94 333.15 968.9 333.15 1051.28 210.33 911.6 210.33"/><path class="ol" d="m1186.99,219.97h0c-12.41-6.4-26.52-9.65-41.94-9.65s-30.52,3.4-42.98,10.09c-12.55,6.75-22.54,16.35-29.68,28.55-7.13,12.17-10.74,25.36-10.74,39.2s3.63,27.63,10.78,39.51c7.15,11.88,17.25,21.34,30.03,28.11,12.69,6.72,26.95,10.13,42.4,10.13s29.94-3.35,42.49-9.97c12.65-6.67,22.74-16.18,30-28.27,7.25-12.08,10.92-25.37,10.92-39.5s-3.77-27.99-11.2-40.15c-7.43-12.15-17.54-21.59-30.07-28.05Zm-42.14,24.49c8.65,0,16.51,1.87,23.36,5.55,6.82,3.67,11.96,8.7,15.71,15.39,3.75,6.69,5.65,14.36,5.65,22.77,0,13.01-4.06,23.29-12.42,31.44-8.4,8.19-18.9,12.17-32.1,12.17-8.65,0-16.47-1.86-23.24-5.54-6.77-3.67-11.9-8.7-15.69-15.37-3.77-6.65-5.69-14.29-5.69-22.7s1.86-16.17,5.52-22.8c3.65-6.61,8.74-11.63,15.56-15.32,6.84-3.71,14.7-5.59,23.35-5.59Z"/><polygon class="ol" points="1365.63 210.33 1365.63 302.03 1289.34 210.33 1257.64 210.33 1257.64 365.79 1294.91 365.79 1294.91 272.55 1371.69 365.79 1402.9 365.79 1402.9 210.33 1365.63 210.33"/><path class="ol" d="m809.03,365.86l-41.5-71.87c1.65-1.14,3.24-2.38,4.74-3.73,9.48-8.56,14.29-19.86,14.29-33.57s-4.74-24.81-14.09-33.47c-9.24-8.56-21.29-12.89-35.82-12.89h-59.93v155.46h37.88v-62.83h14.37l36.24,62.9h43.82Zm-94.43-123.63h13.35c9.8,0,19.83,1.69,19.83,14.26,0,4.92-1.37,8.44-4.19,10.74-3.1,2.53-7.71,3.82-13.71,3.82h-15.27v-28.82Z"/><path class="ol" d="m504.97,129.7c-136.11,78.58-188.99-79.44-321.41-2.99-132.42,76.45-22,201.26-158.11,279.85-7.65,4.42,115.34-48.13,247.76-124.58,132.42-76.45,236.18-144.63,231.77-152.28Zm-242.39,133.99c-97.47,56.28-134.64,64.26-129.01,61.01,29.88-17.25-33.89-118.04,63.59-174.31,97.47-56.28,152.91,49.32,182.75,32.09,3.22,5.58-19.86,24.94-117.34,81.22Z"/><path class="ol" d="m400.77,223.59c14.11,61.02-12.35,126.6-69.4,159.54-57.66,33.29-128.56,22.85-174.31-21.03l30.15-15.47c6,4.72,12.42,8.8,19.14,12.21,33.41,16.91,74.43,17.14,109.28-2.98,41.47-23.94,62.34-69.86,56.39-114.55l28.75-17.72Z"/><path class="ol" d="m257.36,344.01c4.18-2.33,8.34-4.69,12.38-7.27,18.82-11.98,36.2-25.82,50.89-43.12,7.07-8.32,12.54-17.32,16.14-27.19-16.5,9.69-33.27,19.45-50.24,29.25-22.75,13.13-45.21,25.77-67.15,37.86,5.84,3.82,11.83,7.43,17.98,10.82,6.61,3.64,13.38,3.32,19.99-.36Z"/><path class="ol" d="m323.81,193.63c-1.01-4.82-3.47-8.26-7.65-10.44-.86-.45-1.74-.88-2.64-1.24-17.01-6.87-34.08-13.55-51.38-19.59-3.55-1.24-7.09-1.58-10.7-.38-1.84.62-3.67,1.27-5.5,1.92-8.42,2.97-16.79,6.09-25.11,9.34-7.81,3.05-15.62,6.15-23.37,9.36-4.09,1.7-7.21,4.58-8.41,9.2-.93,3.58-1.59,7.23-2.13,10.9-1.67,11.35-2.34,22.77-2.46,33.5.04,7.93.27,15.11,1.06,22.25.49,4.45,1.18,8.86,2.63,13.11.89,2.6,1.96,5.08,3.17,7.47,18.51-9.57,40.05-21.3,64.82-35.6,26.75-15.44,49.88-29.17,69.21-41.08-.44-2.92-.95-5.82-1.56-8.72Z"/></svg></div>
+    <h1><span>FireLine</span> &mdash; Tassonomia ACN</h1>
+    <div class="subtitle">Classificazione TC-ACN v2.0 &mdash; Azienda Anonima SRL</div>
+    <div class="powered-by">Powered by FireLine Security Platform</div>
+    <div class="meta-grid">
+        <div class="meta-card">
+            <div class="label">Scansione</div>
+            <div class="value">Azienda Anonima SRL</div>
+        </div>
+        <div class="meta-card">
+            <div class="label">Data</div>
+            <div class="value">23/02/2026</div>
+        </div>
+        <div class="meta-card">
+            <div class="label">Finding Classificati</div>
+            <div class="value">40</div>
+        </div>
+    </div>
+    <div class="badge-tlp">TLP:AMBER</div>
+</div>
+<div class="container">
+<div class="sibling-reports" id="documenti-correlati">
+    <h3>Documenti Correlati</h3>
+    <p>Questo documento di classificazione TC-ACN si affianca ai seguenti report FireLine generati dalla stessa scansione:</p>
+    <ul><li><strong>Security Report</strong>: <code>security_report_azienda_anonima.html</code> &mdash; Report tecnico completo FireLine (finding, evidenze, remediation)</li><li><strong>Relazione di Scansione</strong>: <code>relazione_scansione_azienda_anonima.html</code> &mdash; Relazione narrativa FireLine (sommario esecutivo, analisi rischio)</li></ul>
+</div>
+<div class="toc">
+    <h3>Indice</h3>
+    <ul>
+        <li><a href="#legenda">Legenda Codici TC-ACN</a></li>
+        <li><a href="#sommario">1. Sommario</a></li>
+        <li><a href="#bc">2. BC &mdash; Caratterizzazione di Base</a></li>
+        <li><a href="#tt">3. TT &mdash; Tipo di Minaccia</a></li>
+        <li><a href="#ta">4. TA &mdash; Attore della Minaccia</a></li>
+        <li><a href="#ac">5. AC &mdash; Contesto Aggiuntivo</a></li>
+        <li><a href="#schede">6. Schede Finding</a></li>
+        <li><a href="#riepilogo">7. Tabella Riepilogativa</a></li>
+        <li><a href="#documenti-correlati">Documenti Correlati</a></li>
+    </ul>
+</div>
+<div class="legend" id="legenda">
+<h2>Legenda Codici TC-ACN</h2>
+<p style="color:#64748b;font-size:0.88rem;margin-bottom:1rem;">Elenco di tutti i codici della Tassonomia Cyber ACN (TC-ACN v2.0) utilizzati nella classificazione dei finding di questa scansione.</p>
+<div class="legend-grid">
+<div class="legend-macro bc">BC &mdash; Caratterizzazione di Base</div>
+<div class="legend-item"><span class="code"><span class="tc-badge bc">BC:IM_AC</span></span><span class="desc">Account Compromise</span></div>
+<div class="legend-item"><span class="code"><span class="tc-badge bc">BC:IM_DE</span></span><span class="desc">Data Exposure</span></div>
+<div class="legend-item"><span class="code"><span class="tc-badge bc">BC:IM_DM</span></span><span class="desc">Data Manipulation</span></div>
+<div class="legend-item"><span class="code"><span class="tc-badge bc">BC:IM_DX</span></span><span class="desc">Data Exfiltration</span></div>
+<div class="legend-item"><span class="code"><span class="tc-badge bc">BC:IM_SY</span></span><span class="desc">System Compromise</span></div>
+<div class="legend-item"><span class="code"><span class="tc-badge bc">BC:RO_MA</span></span><span class="desc">Malicious Actions</span></div>
+<div class="legend-item"><span class="code"><span class="tc-badge bc">BC:SE_HI</span></span><span class="desc">High</span></div>
+<div class="legend-item"><span class="code"><span class="tc-badge bc">BC:SE_ME</span></span><span class="desc">Medium</span></div>
+<div class="legend-item"><span class="code"><span class="tc-badge bc">BC:VG_IT</span></span><span class="desc">Italy</span></div>
+<div class="legend-macro tt">TT &mdash; Tipo di Minaccia</div>
+<div class="legend-item"><span class="code"><span class="tc-badge tt">TT:AV_DO</span></span><span class="desc">DoS</span></div>
+<div class="legend-item"><span class="code"><span class="tc-badge tt">TT:DE_BU</span></span><span class="desc">Bug/Misconfiguration</span></div>
+<div class="legend-item"><span class="code"><span class="tc-badge tt">TT:MA_HA</span></span><span class="desc">Hacking Tool</span></div>
+<div class="legend-item"><span class="code"><span class="tc-badge tt">TT:MA_WE</span></span><span class="desc">Webshell</span></div>
+<div class="legend-item"><span class="code"><span class="tc-badge tt">TT:SO_WA</span></span><span class="desc">Watering Hole</span></div>
+<div class="legend-item"><span class="code"><span class="tc-badge tt">TT:VU_N-</span></span><span class="desc">n-Day</span></div>
+<div class="legend-macro ta">TA &mdash; Attore della Minaccia</div>
+<div class="legend-item"><span class="code"><span class="tc-badge ta">TA:AD_CR</span></span><span class="desc">Criminal</span></div>
+<div class="legend-item"><span class="code"><span class="tc-badge ta">TA:AM_PR</span></span><span class="desc">Profit</span></div>
+<div class="legend-macro ac">AC &mdash; Contesto Aggiuntivo</div>
+<div class="legend-item"><span class="code"><span class="tc-badge ac">AC:AS_IT</span></span><span class="desc">Italy</span></div>
+<div class="legend-item"><span class="code"><span class="tc-badge ac">AC:IN_SW-AP_CM</span></span><span class="desc">CMS</span></div>
+<div class="legend-item"><span class="code"><span class="tc-badge ac">AC:IN_SW-AP_OT</span></span><span class="desc">Other Application</span></div>
+<div class="legend-item"><span class="code"><span class="tc-badge ac">AC:IN_SW-AP_WO</span></span><span class="desc">Web Server / Application</span></div>
+<div class="legend-item"><span class="code"><span class="tc-badge ac">AC:IN_SW-OH_LB</span></span><span class="desc">Library / Framework</span></div>
+<div class="legend-item"><span class="code"><span class="tc-badge ac">AC:IN_SW-OH_TL</span></span><span class="desc">Programming Language / Runtime</span></div>
+<div class="legend-item"><span class="code"><span class="tc-badge ac">AC:OU_ST</span></span><span class="desc">Stable</span></div>
+<div class="legend-item"><span class="code"><span class="tc-badge ac">AC:OU_WO</span></span><span class="desc">Worsening</span></div>
+<div class="legend-item"><span class="code"><span class="tc-badge ac">AC:VE_DR</span></span><span class="desc">Drive-by Compromise</span></div>
+<div class="legend-item"><span class="code"><span class="tc-badge ac">AC:VE_EV</span></span><span class="desc">Exploiting Vulnerabilities</span></div>
+</div></div>
+<h2 id="sommario">1. Sommario</h2>
+<div class="section-intro bc">
+    <p>Questa sezione riepiloga la classificazione di <strong>40 finding</strong> secondo la Tassonomia Cyber dell'ACN (TC-ACN v2.0, Novembre 2025), il linguaggio ufficiale nazionale per le segnalazioni di eventi cyber a ACN/CSIRT Italia.</p>
+</div>
+<div class="stats-grid">
+    <div class="stat-card bc">
+        <div class="stat-value">179</div>
+        <div class="stat-label">BC &mdash; Base</div>
+    </div>
+    <div class="stat-card tt">
+        <div class="stat-value">44</div>
+        <div class="stat-label">TT &mdash; Minaccia</div>
+    </div>
+    <div class="stat-card ta">
+        <div class="stat-value">80</div>
+        <div class="stat-label">TA &mdash; Attore</div>
+    </div>
+    <div class="stat-card ac">
+        <div class="stat-value">181</div>
+        <div class="stat-label">AC &mdash; Contesto</div>
+    </div>
+</div>
+<p><strong>27</strong> codici TC-ACN univoci utilizzati su 40 finding classificati.</p>
+
+        <div class="section radar-section">
+            <h2><svg class="section-icon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M15.51 15.56a5 5 0 1 0 -3.51 1.44" /><path d="M18.832 17.86a9 9 0 1 0 -6.832 3.14" /><path d="M12 12v9" /></svg> Profilo di Rischio Multi-Dimensionale</h2>
+            <div class="radar-container" id="tass-risk-radar"></div>
+            <script>
+            (function() {
+                const data = [{"axis": "Severit\u00e0", "value": 75.2}, {"axis": "EPSS", "value": 7.2}, {"axis": "Confidenza", "value": 72.1}, {"axis": "Esposizione", "value": 0}, {"axis": "CVE Coverage", "value": 100}, {"axis": "CISA KEV", "value": 2.5}, {"axis": "Exploit Disponibili", "value": 0}, {"axis": "Rischio Medio", "value": 79.0}];
+                const cid = "tass-risk-radar";
+                const cfg = {
+                    w: 580, h: 520,
+                    margin: 100,
+                    levels: 5,
+                    maxValue: 100,
+                    labelFactor: 1.22,
+                    dotRadius: 4,
+                    dotHoverRadius: 6,
+                    areaColor: "#4ac300",
+                    areaOpacity: 0.25,
+                    strokeWidth: 2,
+                    gridColor: "#334155",
+                    labelColor: "#94a3b8"
+                };
+                const radius = Math.min(cfg.w, cfg.h) / 2 - cfg.margin;
+                const angleSlice = Math.PI * 2 / data.length;
+
+                const svg = d3.select("#" + cid)
+                    .append("svg")
+                    .attr("viewBox", "0 0 " + cfg.w + " " + cfg.h)
+                    .attr("preserveAspectRatio", "xMidYMid meet")
+                    .style("max-width", "580px")
+                    .style("margin", "0 auto")
+                    .style("display", "block")
+                    .append("g")
+                    .attr("transform", "translate(" + cfg.w/2 + "," + cfg.h/2 + ")");
+
+                // Concentric grid circles
+                for (let lvl = 1; lvl <= cfg.levels; lvl++) {
+                    const r = radius * lvl / cfg.levels;
+                    svg.append("circle")
+                        .attr("r", r)
+                        .attr("fill", "none")
+                        .attr("stroke", cfg.gridColor)
+                        .attr("stroke-width", 0.8)
+                        .attr("stroke-dasharray", lvl < cfg.levels ? "3,3" : "none")
+                        .attr("opacity", 0.5);
+                    svg.append("text")
+                        .attr("x", 5).attr("y", -r + 4)
+                        .text(Math.round(cfg.maxValue * lvl / cfg.levels))
+                        .style("font-size", "9px")
+                        .style("fill", cfg.gridColor)
+                        .style("font-family", "Inter, sans-serif");
+                }
+
+                // Axis lines
+                data.forEach(function(d, i) {
+                    const angle = angleSlice * i - Math.PI / 2;
+                    svg.append("line")
+                        .attr("x1", 0).attr("y1", 0)
+                        .attr("x2", radius * Math.cos(angle))
+                        .attr("y2", radius * Math.sin(angle))
+                        .attr("stroke", cfg.gridColor)
+                        .attr("stroke-width", 0.8)
+                        .attr("opacity", 0.5);
+                });
+
+                // Axis labels with anti-overlap positioning
+                data.forEach(function(d, i) {
+                    const angle = angleSlice * i - Math.PI / 2;
+                    const angleDeg = ((angleSlice * i) * 180 / Math.PI) % 360;
+                    const lx = radius * cfg.labelFactor * Math.cos(angle);
+                    const ly = radius * cfg.labelFactor * Math.sin(angle);
+
+                    let anchor = "middle";
+                    let dy = "0.35em";
+                    if (angleDeg > 10 && angleDeg < 170) {
+                        anchor = "start";
+                    } else if (angleDeg > 190 && angleDeg < 350) {
+                        anchor = "end";
+                    }
+                    if (angleDeg > 60 && angleDeg < 120) dy = "0.8em";
+                    if (angleDeg > 240 && angleDeg < 300) dy = "-0.4em";
+
+                    svg.append("text")
+                        .attr("x", lx).attr("y", ly)
+                        .attr("text-anchor", anchor)
+                        .attr("dy", dy)
+                        .text(d.axis)
+                        .style("font-size", "11px")
+                        .style("fill", cfg.labelColor)
+                        .style("font-family", "Inter, sans-serif")
+                        .style("font-weight", "500");
+                });
+
+                // Tooltip
+                const tooltip = d3.select("#" + cid)
+                    .append("div")
+                    .style("position", "absolute")
+                    .style("background", "rgba(15,23,42,0.95)")
+                    .style("border", "1px solid " + cfg.areaColor)
+                    .style("border-radius", "6px")
+                    .style("padding", "6px 10px")
+                    .style("font-size", "12px")
+                    .style("font-family", "Inter, sans-serif")
+                    .style("color", "#e2e8f0")
+                    .style("pointer-events", "none")
+                    .style("opacity", 0)
+                    .style("z-index", 10);
+
+                // Data area polygon
+                const radarLine = d3.lineRadial()
+                    .radius(function(d) { return radius * d.value / cfg.maxValue; })
+                    .angle(function(d, i) { return i * angleSlice; })
+                    .curve(d3.curveLinearClosed);
+
+                svg.append("path")
+                    .datum(data)
+                    .attr("d", radarLine)
+                    .attr("fill", cfg.areaColor)
+                    .attr("fill-opacity", cfg.areaOpacity)
+                    .attr("stroke", cfg.areaColor)
+                    .attr("stroke-width", cfg.strokeWidth)
+                    .style("opacity", 0)
+                    .transition().duration(800)
+                    .style("opacity", 1);
+
+                // Data dots
+                svg.selectAll(".radar-dot")
+                    .data(data)
+                    .enter().append("circle")
+                    .attr("class", "radar-dot")
+                    .attr("cx", function(d, i) {
+                        const angle = angleSlice * i - Math.PI / 2;
+                        return radius * d.value / cfg.maxValue * Math.cos(angle);
+                    })
+                    .attr("cy", function(d, i) {
+                        const angle = angleSlice * i - Math.PI / 2;
+                        return radius * d.value / cfg.maxValue * Math.sin(angle);
+                    })
+                    .attr("r", cfg.dotRadius)
+                    .attr("fill", cfg.areaColor)
+                    .attr("stroke", "#0f172a")
+                    .attr("stroke-width", 1.5)
+                    .style("cursor", "pointer")
+                    .on("mouseover", function(event, d) {
+                        d3.select(this).transition().duration(150).attr("r", cfg.dotHoverRadius);
+                        const rect = document.getElementById(cid).getBoundingClientRect();
+                        tooltip.html("<strong>" + d.axis + "</strong>: " + d.value.toFixed(1))
+                            .style("left", (event.clientX - rect.left + 12) + "px")
+                            .style("top", (event.clientY - rect.top - 10) + "px")
+                            .transition().duration(150).style("opacity", 1);
+                    })
+                    .on("mouseout", function() {
+                        d3.select(this).transition().duration(150).attr("r", cfg.dotRadius);
+                        tooltip.transition().duration(150).style("opacity", 0);
+                    });
+            })();
+            </script>
+            <style>
+                .radar-section { animation: fadeIn 0.6s ease-in; }
+                .radar-container {
+                    position: relative;
+                    width: 100%;
+                    max-width: 580px;
+                    margin: 20px auto 0;
+                }
+                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+            </style>
+        </div>
+<h2 id="bc" class="bc">2. BC &mdash; Caratterizzazione di Base</h2>
+<div class="section-intro bc"><p>La macrocategoria <strong>BC</strong> descrive le caratteristiche fondamentali di ogni finding: la severit&agrave; dell'impatto, la causa radice tecnica, il tipo di danno potenziale e la collocazione geografica della vittima. Questi predicati permettono di comprendere <em>cosa</em> &egrave; stato rilevato e <em>quanto</em> &egrave; grave, fornendo la base per la prioritizzazione delle remediation.</p></div>
+<h3>Severit&agrave; (BC:SE)</h3>
+<p class="pred-desc">Il predicato <strong>BC:SE</strong> indica la severit&agrave; del finding, derivata dal punteggio CVSS o dalla classificazione qualitativa (Critical, High, Medium, Low, Info). Determina la priorit&agrave; con cui affrontare la remediation: i finding Critical richiedono intervento immediato, quelli Info sono puramente informativi.</p>
+<table><tr><th>Codice</th><th>Valore</th><th>Count</th><th>Finding</th></tr>
+<tr><td><span class="tc-badge bc">BC:SE_HI</span></td><td>High</td><td>39</td><td>CVE-2024-6386, CVE-2024-4439, Potential XSS vulnerability in jQuery, CVE-2018-0645 - MTAppjQuery, CVE-2022-37454 (+34)</td></tr>
+<tr><td><span class="tc-badge bc">BC:SE_ME</span></td><td>Medium</td><td>1</td><td>CVE-2025-58246</td></tr>
+</table>
+<h3>Impatto (BC:IM)</h3>
+<p class="pred-desc">Il predicato <strong>BC:IM</strong> classifica il tipo di impatto potenziale sull'organizzazione. I valori principali sono: compromissione di sistema (<code>IM_SY</code>), esecuzione di codice remoto (<code>IM_EX</code>), divulgazione di informazioni (<code>IM_DF</code>), denial of service (<code>IM_DOS</code>), escalation di privilegi (<code>IM_PE</code>). Derivato dal mapping CWE o dall'analisi euristica del finding.</p>
+<table><tr><th>Codice</th><th>Valore</th><th>Count</th><th>Finding</th></tr>
+<tr><td><span class="tc-badge bc">BC:IM_SY</span></td><td>System Compromise</td><td>33</td><td>CVE-2024-6386, CVE-2024-4439, CVE-2018-0645 - MTAppjQuery, CVE-2022-37454, CVE-2024-3566 (+28)</td></tr>
+<tr><td><span class="tc-badge bc">BC:IM_DX</span></td><td>Data Exfiltration</td><td>15</td><td>CVE-2009-4748, CVE-2010-0673, CVE-2009-3703, CVE-2008-7040, CVE-2009-2122 (+10)</td></tr>
+<tr><td><span class="tc-badge bc">BC:IM_AC</span></td><td>Account Compromise</td><td>5</td><td>Potential XSS vulnerability in jQuery, CVE-2008-4734, CVE-2025-28861 - WP jQuery Persian Datepicker, CVE-2025-46514 - Milat jQuery Automatic Popup, CVE-2025-30560 - jQuery Dropdown Menu</td></tr>
+<tr><td><span class="tc-badge bc">BC:IM_DM</span></td><td>Data Manipulation</td><td>4</td><td>CVE-2008-4734, CVE-2025-28861 - WP jQuery Persian Datepicker, CVE-2025-46514 - Milat jQuery Automatic Popup, CVE-2025-30560 - jQuery Dropdown Menu</td></tr>
+<tr><td><span class="tc-badge bc">BC:IM_DE</span></td><td>Data Exposure</td><td>2</td><td>CVE-2009-4672, CVE-2025-58246</td></tr>
+</table>
+<h3>Causa Radice (BC:RO)</h3>
+<p class="pred-desc">Il predicato <strong>BC:RO</strong> identifica la causa radice della vulnerabilit&agrave;: configurazione errata (<code>RO_MC</code>), errore di sviluppo (<code>RO_DE</code>), componente vulnerabile noto (<code>RO_VC</code>), credenziali deboli (<code>RO_WC</code>), design insicuro (<code>RO_ID</code>). Questa informazione &egrave; cruciale per indirizzare le azioni correttive al team corretto (operations, sviluppo, architettura).</p>
+<table><tr><th>Codice</th><th>Valore</th><th>Count</th><th>Finding</th></tr>
+<tr><td><span class="tc-badge bc">BC:RO_MA</span></td><td>Malicious Actions</td><td>40</td><td>CVE-2024-6386, CVE-2024-4439, Potential XSS vulnerability in jQuery, CVE-2018-0645 - MTAppjQuery, CVE-2022-37454 (+35)</td></tr>
+</table>
+<h3>Geografia Vittima (BC:VG)</h3>
+<p class="pred-desc">Il predicato <strong>BC:VG</strong> indica la collocazione geografica dell'organizzazione vittima, rilevante per la giurisdizione normativa (GDPR, NIS2) e per le notifiche obbligatorie a CSIRT Italia/ACN. Il valore &egrave; configurato nel profilo di scansione.</p>
+<table><tr><th>Codice</th><th>Valore</th><th>Count</th><th>Finding</th></tr>
+<tr><td><span class="tc-badge bc">BC:VG_IT</span></td><td>Italy</td><td>40</td><td>CVE-2024-6386, CVE-2024-4439, Potential XSS vulnerability in jQuery, CVE-2018-0645 - MTAppjQuery, CVE-2022-37454 (+35)</td></tr>
+</table>
+<h2 id="tt" class="tt">3. TT &mdash; Tipo di Minaccia</h2>
+<div class="section-intro tt"><p>La macrocategoria <strong>TT</strong> classifica il tipo di minaccia associato a ogni finding. I predicati indicano <em>come</em> un attaccante potrebbe sfruttare la vulnerabilit&agrave;: exploit di falle software, iniezione di malware, ingegneria sociale, violazione dati o attacchi alla disponibilit&agrave;. La classificazione &egrave; derivata dal mapping MITRE ATT&amp;CK, dall'analisi CWE e dall'euristica sul titolo e sulla descrizione del finding.</p></div>
+<h3>Vulnerabilit&agrave; (TT:VU)</h3>
+<p class="pred-desc">Il predicato <strong>TT:VU</strong> indica vulnerabilit&agrave; software sfruttabili. I finding sono classificati come N-Day (<code>VU_N-</code>) quando esiste un CVE noto con patch disponibile, o 0-Day (<code>VU_0-</code>) quando la vulnerabilit&agrave; &egrave; sconosciuta o senza patch. La distinzione &egrave; fondamentale per la valutazione del rischio: un 0-Day non ha remediation immediata.</p>
+<table><tr><th>Codice</th><th>Valore</th><th>Count</th><th>Finding / CVE</th></tr>
+<tr><td><span class="tc-badge tt">TT:VU_N-</span></td><td>n-Day</td><td>35</td><td>CVE-2024-6386 (CVE-2024-6386), CVE-2024-4439 (CVE-2024-4439), Potential XSS vulnerability in jQuery (CVE-2020-11023), CVE-2022-37454 (CVE-2022-37454), CVE-2024-3566 (CVE-2024-3566) (+30)</td></tr>
+</table>
+<h3>Malware (TT:MA)</h3>
+<p class="pred-desc">Il predicato <strong>TT:MA</strong> segnala finding che evidenziano possibilit&agrave; di iniezione o presenza di codice malevolo: ransomware, trojan, backdoor, web shell. In ambito pentest, indica vulnerabilit&agrave; che un attaccante potrebbe usare per installare malware persistente nel sistema.</p>
+<table><tr><th>Codice</th><th>Valore</th><th>Count</th><th>Finding / CVE</th></tr>
+<tr><td><span class="tc-badge tt">TT:MA_HA</span></td><td>Hacking Tool</td><td>3</td><td>CVE-2024-6386 (CVE-2024-6386), CVE-2009-2396 (CVE-2009-2396), CVE-2009-2143 (CVE-2009-2143)</td></tr>
+<tr><td><span class="tc-badge tt">TT:MA_WE</span></td><td>Webshell</td><td>2</td><td>CVE-2018-0645 - MTAppjQuery (CVE-2018-0645), CVE-2018-9208 - jQuery Picture Cut (CVE-2018-9208)</td></tr>
+</table>
+<h3>Disponibilit&agrave; (TT:AV)</h3>
+<p class="pred-desc">Il predicato <strong>TT:AV</strong> indica minacce alla disponibilit&agrave; del servizio: configurazioni vulnerabili a DoS/DDoS, resource exhaustion, slowloris. Finding che un attaccante potrebbe sfruttare per interrompere l'operativit&agrave; dell'organizzazione.</p>
+<table><tr><th>Codice</th><th>Valore</th><th>Count</th><th>Finding / CVE</th></tr>
+<tr><td><span class="tc-badge tt">TT:AV_DO</span></td><td>DoS</td><td>2</td><td>CVE-2017-8923 (CVE-2017-8923), CVE-2022-31147 - jquery-validation (CVE-2022-31147)</td></tr>
+</table>
+<h3>Ingegneria Sociale (TT:SO)</h3>
+<p class="pred-desc">Il predicato <strong>TT:SO</strong> classifica finding correlati ad attacchi di ingegneria sociale: form di login senza protezioni anti-phishing, pagine di credential harvesting, assenza di autenticazione multi-fattore. Indica superfici di attacco per phishing mirato (spear-phishing) o campagne di social engineering.</p>
+<table><tr><th>Codice</th><th>Valore</th><th>Count</th><th>Finding / CVE</th></tr>
+<tr><td><span class="tc-badge tt">TT:SO_WA</span></td><td>Watering Hole</td><td>1</td><td>Potential XSS vulnerability in jQuery (CVE-2020-11023)</td></tr>
+</table>
+<h3>Violazione Dati (TT:DE)</h3>
+<p class="pred-desc">Il predicato <strong>TT:DE</strong> segnala finding che comportano rischio di violazione dati: esposizione di dati personali, credenziali in chiaro, informazioni sensibili accessibili senza autorizzazione. Rilevante per gli obblighi di notifica GDPR (art. 33-34) e NIS2.</p>
+<table><tr><th>Codice</th><th>Valore</th><th>Count</th><th>Finding / CVE</th></tr>
+<tr><td><span class="tc-badge tt">TT:DE_BU</span></td><td>Bug/Misconfiguration</td><td>1</td><td>CVE-2025-14177 (CVE-2025-14177)</td></tr>
+</table>
+<h2 id="ta" class="ta">4. TA &mdash; Attore della Minaccia</h2>
+<div class="section-intro ta"><p>La macrocategoria <strong>TA</strong> caratterizza il profilo dell'attore della minaccia in termini di motivazione e tipologia. Nel contesto di un penetration test, questa classificazione &egrave; <em>ipotetica</em>: si basa sul tipo di asset esposti e sulle vulnerabilit&agrave; rilevate per stimare quale profilo di attaccante sarebbe pi&ugrave; probabile. I valori sono configurati nel profilo di scansione e possono essere personalizzati dall'analista.</p></div>
+<h3>Motivazione (TA:AM)</h3>
+<p class="pred-desc">Il predicato <strong>TA:AM</strong> indica la motivazione presunta dell'attore: profitto economico (<code>AM_FG</code>), spionaggio (<code>AM_ES</code>), ideologia/hacktivism (<code>AM_ID</code>), sabotaggio (<code>AM_SB</code>). In un pentest, la motivazione &egrave; ipotetica e basata sul tipo di asset esposti &mdash; un e-commerce suggerisce motivazione economica, un ente governativo suggerisce spionaggio.</p>
+<table><tr><th>Codice</th><th>Valore</th><th>Count</th></tr>
+<tr><td><span class="tc-badge ta">TA:AM_PR</span></td><td>Profit</td><td>40</td></tr>
+</table>
+<h3>Tipo Avversario (TA:AD)</h3>
+<p class="pred-desc">Il predicato <strong>TA:AD</strong> classifica la tipologia di avversario pi&ugrave; probabile: cybercriminale (<code>AD_CR</code>), hacktivist (<code>AD_HA</code>), insider (<code>AD_IN</code>), stato-nazione (<code>AD_NS</code>). La classificazione indica quale livello di sofisticazione e persistenza attendersi nella risposta alle vulnerabilit&agrave; rilevate.</p>
+<table><tr><th>Codice</th><th>Valore</th><th>Count</th></tr>
+<tr><td><span class="tc-badge ta">TA:AD_CR</span></td><td>Criminal</td><td>40</td></tr>
+</table>
+<h2 id="ac" class="ac">5. AC &mdash; Contesto Aggiuntivo</h2>
+<div class="section-intro ac"><p>La macrocategoria <strong>AC</strong> fornisce il contesto operativo di ogni finding: quale infrastruttura &egrave; coinvolta, attraverso quale vettore un attaccante potrebbe agire, quale &egrave; la previsione evolutiva (outlook) della minaccia, e dove si trovano fisicamente gli asset. Questi predicati completano il quadro classificatorio e sono essenziali per la pianificazione delle contromisure.</p></div>
+<h3>Infrastruttura Coinvolta (AC:IN)</h3>
+<p class="pred-desc">Il predicato <strong>AC:IN</strong> identifica l'infrastruttura tecnologica coinvolta dal finding: server web/applicativi (<code>IN_SW-AP_WO</code>), database (<code>IN_SW-AP_DB</code>), rete (<code>IN_NE</code>), servizi cloud (<code>IN_CL</code>), IoT (<code>IN_IO</code>). Derivato dalle tecnologie rilevate durante la scansione o dai port fingerprint.</p>
+<table><tr><th>Codice</th><th>Valore</th><th>Count</th><th>Finding</th></tr>
+<tr><td><span class="tc-badge ac">AC:IN_SW-AP_CM</span></td><td>CMS</td><td>24</td><td>CVE-2024-6386, CVE-2024-4439, CVE-2009-2396, CVE-2023-5464 - Jquery accordion slideshow (+20)</td></tr>
+<tr><td><span class="tc-badge ac">AC:IN_SW-OH_TL</span></td><td>Programming Language / Runtime</td><td>22</td><td>CVE-2018-0645 - MTAppjQuery, CVE-2017-8923, CVE-2009-2396, CVE-2021-21703 (+18)</td></tr>
+<tr><td><span class="tc-badge ac">AC:IN_SW-OH_LB</span></td><td>Library / Framework</td><td>11</td><td>Potential XSS vulnerability in jQuery, CVE-2018-0645 - MTAppjQuery, CVE-2018-9208 - jQuery Picture Cut, CVE-2023-5464 - Jquery accordion slideshow (+7)</td></tr>
+<tr><td><span class="tc-badge ac">AC:IN_SW-AP_OT</span></td><td>Other Application</td><td>2</td><td>CVE-2022-37454, CVE-2024-3566</td></tr>
+<tr><td><span class="tc-badge ac">AC:IN_SW-AP_WO</span></td><td>Web Server / Application</td><td>2</td><td>CVE-2022-37454, CVE-2024-3566</td></tr>
+</table>
+<h3>Vettore di Attacco (AC:VE)</h3>
+<p class="pred-desc">Il predicato <strong>AC:VE</strong> classifica il vettore di attacco utilizzabile: web application (<code>VE_WA</code>), rete (<code>VE_NE</code>), email (<code>VE_EM</code>), accesso fisico (<code>VE_PH</code>). Derivato dalla tecnica MITRE ATT&amp;CK associata o dal tipo di CWE del finding.</p>
+<table><tr><th>Codice</th><th>Valore</th><th>Count</th><th>Finding</th></tr>
+<tr><td><span class="tc-badge ac">AC:VE_EV</span></td><td>Exploiting Vulnerabilities</td><td>39</td><td>CVE-2024-6386, CVE-2024-4439, CVE-2018-0645 - MTAppjQuery, CVE-2022-37454 (+35)</td></tr>
+<tr><td><span class="tc-badge ac">AC:VE_DR</span></td><td>Drive-by Compromise</td><td>1</td><td>Potential XSS vulnerability in jQuery</td></tr>
+</table>
+<h3>Outlook (AC:OU)</h3>
+<p class="pred-desc">Il predicato <strong>AC:OU</strong> indica la previsione evolutiva della minaccia: in peggioramento (<code>OU_WO</code>) se il CVE &egrave; nel catalogo KEV CISA o ha exploit pubblici, in miglioramento (<code>OU_IM</code>) se &egrave; disponibile una patch recente, stabile (<code>OU_ST</code>) in assenza di indicatori specifici.</p>
+<table><tr><th>Codice</th><th>Valore</th><th>Count</th><th>Finding</th></tr>
+<tr><td><span class="tc-badge ac">AC:OU_ST</span></td><td>Stable</td><td>39</td><td>CVE-2024-6386, CVE-2024-4439, CVE-2018-0645 - MTAppjQuery, CVE-2022-37454 (+35)</td></tr>
+<tr><td><span class="tc-badge ac">AC:OU_WO</span></td><td>Worsening</td><td>1</td><td>Potential XSS vulnerability in jQuery</td></tr>
+</table>
+<h3>Ubicazione Asset (AC:AS)</h3>
+<p class="pred-desc">Il predicato <strong>AC:AS</strong> indica la localizzazione fisica dell'infrastruttura: on-premise (<code>AS_OP</code>), cloud (<code>AS_CL</code>), ibrido (<code>AS_HY</code>). Configurato nel profilo di scansione, &egrave; rilevante per determinare le responsabilit&agrave; di remediation (provider cloud vs. team interno).</p>
+<table><tr><th>Codice</th><th>Valore</th><th>Count</th><th>Finding</th></tr>
+<tr><td><span class="tc-badge ac">AC:AS_IT</span></td><td>Italy</td><td>40</td><td>CVE-2024-6386, CVE-2024-4439, Potential XSS vulnerability in jQuery, CVE-2018-0645 - MTAppjQuery (+36)</td></tr>
+</table>
+<h2 id="schede">6. Schede Finding</h2>
+<div class="section-intro bc"><p>Ogni finding &egrave; presentato con tutti i codici TC-ACN assegnati, il livello di confidenza della classificazione e la fonte dei dati. La <strong>confidenza</strong> varia da 0.4 (euristica/fallback) a 1.0 (dato certo): valori &ge;0.85 indicano classificazione basata su dati strutturati (CWE, MITRE ATT&amp;CK), valori &lt;0.7 indicano classificazione euristica o di default che potrebbe richiedere revisione manuale.</p></div>
+<div class="finding-card critical">
+<h4><span class="badge-sev critical">CRITICAL</span> CVE-2024-6386</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2024-6386 | CWE-1336 | Tier: TIER_1</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:MA_HA</span><span class="confidence">[95% mitre]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-AP_CM</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[90% mitre]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2024-4439</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2024-4439 | CWE-80 | Tier: TIER_1</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[50% heuristic]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[60% heuristic]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[80% cve_analysis]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-AP_CM</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[50% fallback]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card critical">
+<h4><span class="badge-sev critical">CRITICAL</span> Potential XSS vulnerability in jQuery</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2020-11023 | CWE-79 | Tier: TIER_1</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_AC</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:SO_WA</span><span class="confidence">[95% mitre]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_LB</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_DR</span><span class="confidence">[90% mitre]</span> 
+<span class="tc-badge ac">AC:OU_WO</span><span class="confidence">[70% cve_analysis]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card critical">
+<h4><span class="badge-sev critical">CRITICAL</span> CVE-2018-0645 - MTAppjQuery</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2018-0645 | CWE-434 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:MA_WE</span><span class="confidence">[95% mitre]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_LB</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_TL</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[90% mitre]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card critical">
+<h4><span class="badge-sev critical">CRITICAL</span> CVE-2022-37454</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2022-37454 | CWE-190 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-AP_OT</span><span class="confidence">[70% port]</span> 
+<span class="tc-badge ac">AC:IN_SW-AP_WO</span><span class="confidence">[70% port]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[50% fallback]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card critical">
+<h4><span class="badge-sev critical">CRITICAL</span> CVE-2024-3566</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2024-3566 | CWE-77 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[50% heuristic]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[60% heuristic]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[60% heuristic]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-AP_OT</span><span class="confidence">[70% port]</span> 
+<span class="tc-badge ac">AC:IN_SW-AP_WO</span><span class="confidence">[70% port]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[50% fallback]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card critical">
+<h4><span class="badge-sev critical">CRITICAL</span> CVE-2018-9208 - jQuery Picture Cut</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2018-9208 | CWE-434 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:MA_WE</span><span class="confidence">[95% mitre]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_LB</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[90% mitre]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card critical">
+<h4><span class="badge-sev critical">CRITICAL</span> CVE-2017-8923</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2017-8923 | CWE-787 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[50% heuristic]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[60% heuristic]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:AV_DO</span><span class="confidence">[60% heuristic]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_TL</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[50% fallback]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card critical">
+<h4><span class="badge-sev critical">CRITICAL</span> CVE-2009-2396</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2009-2396 | CWE-94 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:MA_HA</span><span class="confidence">[95% mitre]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-AP_CM</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_TL</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[90% mitre]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2023-5464 - Jquery accordion slideshow</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2023-5464 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[50% heuristic]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[60% heuristic]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[60% heuristic]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-AP_CM</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_LB</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[50% fallback]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2021-20087 - jquery-deparam</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2021-20087 | CWE-1321 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[50% heuristic]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[60% heuristic]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[50% fallback]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_LB</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[50% fallback]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2023-5430 - Jquery news ticker</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2023-5430 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[50% heuristic]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[60% heuristic]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[60% heuristic]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-AP_CM</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_LB</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[50% fallback]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2021-20086 - jquery-bbq</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2021-20086 | CWE-1321 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[50% heuristic]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[60% heuristic]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[50% fallback]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_LB</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[50% fallback]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2021-21703</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2021-21703 | CWE-284 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[50% heuristic]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[60% heuristic]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[50% fallback]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_TL</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[50% fallback]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2013-2220</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2013-2220 | CWE-119 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[50% heuristic]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[60% heuristic]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[95% mitre]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_TL</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[90% mitre]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2009-4748</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2009-4748 | CWE-89 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:IM_DX</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[95% mitre]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-AP_CM</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_TL</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[90% mitre]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2010-0673</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2010-0673 | CWE-89 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:IM_DX</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[95% mitre]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-AP_CM</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_TL</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[90% mitre]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2009-3703</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2009-3703 | CWE-89 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:IM_DX</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[95% mitre]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-AP_CM</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_TL</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[90% mitre]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2008-7040</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2008-7040 | CWE-89 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:IM_DX</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[95% mitre]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-AP_CM</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_TL</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[90% mitre]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2009-2122</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2009-2122 | CWE-89 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:IM_DX</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[95% mitre]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-AP_CM</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_TL</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[90% mitre]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2008-4734</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2008-4734 | CWE-352 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_AC</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:IM_DM</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-AP_CM</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[80% cwe]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2008-1982</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2008-1982 | CWE-89 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:IM_DX</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[95% mitre]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-AP_CM</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_TL</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[90% mitre]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2009-2383</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2009-2383 | CWE-89 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:IM_DX</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[95% mitre]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-AP_CM</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_TL</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[90% mitre]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2010-2924</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2010-2924 | CWE-89 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:IM_DX</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[95% mitre]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-AP_CM</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_TL</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[90% mitre]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2011-1047</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2011-1047 | CWE-89 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:IM_DX</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[95% mitre]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-AP_CM</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_TL</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[90% mitre]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2010-4839</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2010-4839 | CWE-89 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:IM_DX</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[95% mitre]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-AP_CM</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[90% mitre]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2025-14180</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2025-14180 | CWE-476 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[50% heuristic]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[60% heuristic]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[50% fallback]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_TL</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[50% fallback]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2025-14177</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2025-14177 | CWE-125 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[50% heuristic]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[60% heuristic]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:DE_BU</span><span class="confidence">[60% heuristic]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_TL</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[50% fallback]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2022-31147 - jquery-validation</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2022-31147 | CWE-1333 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[50% heuristic]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[60% heuristic]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:AV_DO</span><span class="confidence">[60% heuristic]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_LB</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[50% fallback]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2008-4625</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2008-4625 | CWE-89 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:IM_DX</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[95% mitre]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-AP_CM</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_TL</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[90% mitre]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2008-4732</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2008-4732 | CWE-89 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:IM_DX</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[95% mitre]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-AP_CM</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_TL</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[90% mitre]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2009-0968</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2009-0968 | CWE-89 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:IM_DX</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[95% mitre]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-AP_CM</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_TL</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[90% mitre]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2009-2143</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2009-2143 | CWE-94 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:MA_HA</span><span class="confidence">[95% mitre]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-AP_CM</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_TL</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[90% mitre]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2009-2144</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2009-2144 | CWE-89 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:IM_DX</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[95% mitre]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-AP_CM</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[90% mitre]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2009-4424</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2009-4424 | CWE-89 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_SY</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:IM_DX</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[95% mitre]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-AP_CM</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_TL</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[90% mitre]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2009-4672</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2009-4672 | CWE-22 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_DE</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[95% mitre]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-AP_CM</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_TL</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[90% mitre]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2025-28861 - WP jQuery Persian Datepicker</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2025-28861 | CWE-352 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_AC</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:IM_DM</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_LB</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[80% cwe]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2025-46514 - Milat jQuery Automatic Popup</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2025-46514 | CWE-352 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_AC</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:IM_DM</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_LB</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[80% cwe]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card high">
+<h4><span class="badge-sev high">HIGH</span> CVE-2025-30560 - jQuery Dropdown Menu</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2025-30560 | CWE-352 | Tier: TIER_2</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_HI</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_AC</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:IM_DM</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[85% cwe]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-OH_LB</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[80% cwe]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<div class="finding-card medium">
+<h4><span class="badge-sev medium">MEDIUM</span> CVE-2025-58246</h4>
+<div class="meta">Target: www.aziendaanonima.com | CVE: CVE-2025-58246 | CWE-201 | Tier: TIER_3</div>
+<div class="codes">
+<span class="tc-badge bc">BC:SE_ME</span><span class="confidence">[100% severity]</span> 
+<span class="tc-badge bc">BC:IM_DE</span><span class="confidence">[40% heuristic]</span> 
+<span class="tc-badge bc">BC:RO_MA</span><span class="confidence">[60% heuristic]</span> 
+<span class="tc-badge bc">BC:VG_IT</span><span class="confidence">[100% default]</span> 
+<span class="tc-badge tt">TT:VU_N-</span><span class="confidence">[50% fallback]</span> 
+<span class="tc-badge ta">TA:AM_PR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ta">TA:AD_CR</span><span class="confidence">[60% default]</span> 
+<span class="tc-badge ac">AC:IN_SW-AP_CM</span><span class="confidence">[85% technology]</span> 
+<span class="tc-badge ac">AC:VE_EV</span><span class="confidence">[50% fallback]</span> 
+<span class="tc-badge ac">AC:OU_ST</span><span class="confidence">[50% default]</span> 
+<span class="tc-badge ac">AC:AS_IT</span><span class="confidence">[100% default]</span> 
+</div></div>
+<h2 id="riepilogo">7. Tabella Riepilogativa</h2>
+<div class="section-intro bc"><p>Distribuzione di tutti i codici TC-ACN utilizzati nella classificazione, ordinati per frequenza. I codici pi&ugrave; ricorrenti evidenziano i pattern dominanti nella superficie di attacco analizzata e possono guidare la prioritizzazione degli interventi correttivi.</p></div>
+<table><tr><th>Codice</th><th>Macrocategoria</th><th>Valore</th><th>Frequenza</th><th>Distribuzione</th></tr>
+<tr><td><span class="tc-badge bc">BC:RO_MA</span></td><td>BC</td><td>Malicious Actions</td><td>40</td><td><div class="freq-bar"><div class="bar bc" style="width:200px"></div></div></td></tr>
+<tr><td><span class="tc-badge bc">BC:VG_IT</span></td><td>BC</td><td>Italy</td><td>40</td><td><div class="freq-bar"><div class="bar bc" style="width:200px"></div></div></td></tr>
+<tr><td><span class="tc-badge ta">TA:AM_PR</span></td><td>TA</td><td>Profit</td><td>40</td><td><div class="freq-bar"><div class="bar ta" style="width:200px"></div></div></td></tr>
+<tr><td><span class="tc-badge ta">TA:AD_CR</span></td><td>TA</td><td>Criminal</td><td>40</td><td><div class="freq-bar"><div class="bar ta" style="width:200px"></div></div></td></tr>
+<tr><td><span class="tc-badge ac">AC:AS_IT</span></td><td>AC</td><td>Italy</td><td>40</td><td><div class="freq-bar"><div class="bar ac" style="width:200px"></div></div></td></tr>
+<tr><td><span class="tc-badge bc">BC:SE_HI</span></td><td>BC</td><td>High</td><td>39</td><td><div class="freq-bar"><div class="bar bc" style="width:195px"></div></div></td></tr>
+<tr><td><span class="tc-badge ac">AC:VE_EV</span></td><td>AC</td><td>Exploiting Vulnerabilities</td><td>39</td><td><div class="freq-bar"><div class="bar ac" style="width:195px"></div></div></td></tr>
+<tr><td><span class="tc-badge ac">AC:OU_ST</span></td><td>AC</td><td>Stable</td><td>39</td><td><div class="freq-bar"><div class="bar ac" style="width:195px"></div></div></td></tr>
+<tr><td><span class="tc-badge tt">TT:VU_N-</span></td><td>TT</td><td>n-Day</td><td>35</td><td><div class="freq-bar"><div class="bar tt" style="width:175px"></div></div></td></tr>
+<tr><td><span class="tc-badge bc">BC:IM_SY</span></td><td>BC</td><td>System Compromise</td><td>33</td><td><div class="freq-bar"><div class="bar bc" style="width:165px"></div></div></td></tr>
+<tr><td><span class="tc-badge ac">AC:IN_SW-AP_CM</span></td><td>AC</td><td>CMS</td><td>24</td><td><div class="freq-bar"><div class="bar ac" style="width:120px"></div></div></td></tr>
+<tr><td><span class="tc-badge ac">AC:IN_SW-OH_TL</span></td><td>AC</td><td>Programming Language / Runtime</td><td>22</td><td><div class="freq-bar"><div class="bar ac" style="width:110px"></div></div></td></tr>
+<tr><td><span class="tc-badge bc">BC:IM_DX</span></td><td>BC</td><td>Data Exfiltration</td><td>15</td><td><div class="freq-bar"><div class="bar bc" style="width:75px"></div></div></td></tr>
+<tr><td><span class="tc-badge ac">AC:IN_SW-OH_LB</span></td><td>AC</td><td>Library / Framework</td><td>11</td><td><div class="freq-bar"><div class="bar ac" style="width:55px"></div></div></td></tr>
+<tr><td><span class="tc-badge bc">BC:IM_AC</span></td><td>BC</td><td>Account Compromise</td><td>5</td><td><div class="freq-bar"><div class="bar bc" style="width:25px"></div></div></td></tr>
+<tr><td><span class="tc-badge bc">BC:IM_DM</span></td><td>BC</td><td>Data Manipulation</td><td>4</td><td><div class="freq-bar"><div class="bar bc" style="width:20px"></div></div></td></tr>
+<tr><td><span class="tc-badge tt">TT:MA_HA</span></td><td>TT</td><td>Hacking Tool</td><td>3</td><td><div class="freq-bar"><div class="bar tt" style="width:15px"></div></div></td></tr>
+<tr><td><span class="tc-badge tt">TT:MA_WE</span></td><td>TT</td><td>Webshell</td><td>2</td><td><div class="freq-bar"><div class="bar tt" style="width:10px"></div></div></td></tr>
+<tr><td><span class="tc-badge ac">AC:IN_SW-AP_OT</span></td><td>AC</td><td>Other Application</td><td>2</td><td><div class="freq-bar"><div class="bar ac" style="width:10px"></div></div></td></tr>
+<tr><td><span class="tc-badge ac">AC:IN_SW-AP_WO</span></td><td>AC</td><td>Web Server / Application</td><td>2</td><td><div class="freq-bar"><div class="bar ac" style="width:10px"></div></div></td></tr>
+<tr><td><span class="tc-badge tt">TT:AV_DO</span></td><td>TT</td><td>DoS</td><td>2</td><td><div class="freq-bar"><div class="bar tt" style="width:10px"></div></div></td></tr>
+<tr><td><span class="tc-badge bc">BC:IM_DE</span></td><td>BC</td><td>Data Exposure</td><td>2</td><td><div class="freq-bar"><div class="bar bc" style="width:10px"></div></div></td></tr>
+<tr><td><span class="tc-badge tt">TT:SO_WA</span></td><td>TT</td><td>Watering Hole</td><td>1</td><td><div class="freq-bar"><div class="bar tt" style="width:5px"></div></div></td></tr>
+<tr><td><span class="tc-badge ac">AC:VE_DR</span></td><td>AC</td><td>Drive-by Compromise</td><td>1</td><td><div class="freq-bar"><div class="bar ac" style="width:5px"></div></div></td></tr>
+<tr><td><span class="tc-badge ac">AC:OU_WO</span></td><td>AC</td><td>Worsening</td><td>1</td><td><div class="freq-bar"><div class="bar ac" style="width:5px"></div></div></td></tr>
+<tr><td><span class="tc-badge tt">TT:DE_BU</span></td><td>TT</td><td>Bug/Misconfiguration</td><td>1</td><td><div class="freq-bar"><div class="bar tt" style="width:5px"></div></div></td></tr>
+<tr><td><span class="tc-badge bc">BC:SE_ME</span></td><td>BC</td><td>Medium</td><td>1</td><td><div class="freq-bar"><div class="bar bc" style="width:5px"></div></div></td></tr>
+</table>
+</div>
+<footer>
+    <p><span class="footer-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><path fill="#002430" d="m63.98,15.16c-18.15,10.48-25.2-10.59-42.85-.4C3.47,24.95,18.19,41.6.05,52.07c-1.02.59,15.38-6.42,33.03-16.61,17.66-10.19,31.49-19.28,30.9-20.3Zm-32.32,17.87c-13,7.5-17.95,8.57-17.2,8.13,3.98-2.3-4.52-15.74,8.48-23.24,13-7.5,20.39,6.58,24.37,10.0.0.14-2.65,3.33-15.64,10.83Z"/><path fill="#002430" d="m50.09,27.68c1.88,8.14-1.65,16.88-9.25,21.27s-17.14,3.05-23.24-2.8l4.02-2.06c.8.63,1.66,1.17,2.55,1.63,4.45,2.25,9.92,2.29,14.57-.4,5.53-3.19,8.31-9.31,7.52-15.27l3.83-2.36Z"/><path fill="#002430" d="m30.97,43.73c.56-.31,1.11-.63,1.65-.97,2.51-1.6,4.83-3.44,6.79-5.75.94-1.11,1.67-2.31,2.15-3.62-2.2,1.29-4.44,2.59-6.7,3.9-3.03,1.75-6.03,3.44-8.95,10.0.0.15,1.58.99,2.4,10.0.0.11,1.78.44,2.67-.05Z"/><path fill="#002430" d="m39.83,23.68c-.13-.64-.46-1.1-1.02-1.39-.12-.06-.23-.12-.35-.17-2.27-.92-4.54-1.81-6.85-2.61-.47-.17-.95-.21-1.43-.05-.25.08-.49.17-.73.26-1.12.4-2.24.81-3.35,1.25-1.04.41-2.08.82-3.12,1.25-.55.23-.96.61-1.12,1.23-.12.48-.21.96-.28,1.45-.22,1.51-.31,3.04-.33,4.47,0,1.06.04,2.01.14,10.0.0.13.16,1.18.35,10.0.0.12.26.68.42,1,2.47-1.28,5.34-2.84,8.64-4.75,3.57-2.06,6.65-3.89,9.23-5.48-.06-.39-.13-.78-.21-1.16Z"/></svg></span>
+    Documento generato automaticamente da <strong>FireLine</strong> Security Platform v12.0.0</p>
+    <p>Classificazione secondo TC-ACN v2.0 (Novembre 2025) &mdash; <a href="https://www.acn.gov.it" target="_blank">Agenzia per la Cybersicurezza Nazionale</a></p>
+    <p>Generato il 23/02/2026 16:23</p>
+</footer>
+</body>
+</html>
